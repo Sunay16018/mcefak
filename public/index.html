@@ -853,6 +853,39 @@
       font-size: 0.9rem;
     }
 
+
+    /* Yeni Sunucu Ekle Butonu */
+    .btn-new-server {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(46, 160, 67, 0.25);
+    }
+
+    .btn-new-server:hover {
+      background: linear-gradient(135deg, #2ea043, #3fb950);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(46, 160, 67, 0.35);
+    }
+
+    .btn-new-server:active {
+      transform: translateY(0);
+    }
+
+    .empty-state .btn-new-server {
+      margin-top: 24px;
+    }
+
     @media (max-width: 768px) {
       .topbar {
         flex-direction: column;
@@ -933,7 +966,12 @@
   </header>
 
   <main class="container page" id="page-server-browser">
-    <h2 class="section-title">🌐 Sunucu Listesi</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <h2 class="section-title" style="margin-bottom:0;">🌐 Sunucu Listesi</h2>
+      <button class="btn-new-server" id="btn-new-server">
+        <span>➕</span> Yeni Sunucu Ekle
+      </button>
+    </div>
 
     <div id="server-list" class="server-list"></div>
 
@@ -941,6 +979,9 @@
       <div class="icon">🌐</div>
       <h3>Henüz sunucu yok</h3>
       <p>Bot eklediğinizde sunucular burada görünecek.</p>
+      <button class="btn-new-server" id="btn-new-server-empty">
+        <span>➕</span> Yeni Sunucu Ekle
+      </button>
     </div>
   </main>
 
@@ -992,7 +1033,7 @@
   <div class="modal-overlay" id="modal-add-bot">
     <div class="modal">
       <div class="modal-header">
-        <h3><span>➕</span> Yeni Bot Ekle</h3>
+        <h3><span>➕</span> <span id="modal-title">Yeni Sunucu Ekle</span></h3>
         <button class="modal-close" id="modal-add-close">✕</button>
       </div>
       <div class="modal-body">
@@ -1549,12 +1590,28 @@
     }
 
     function openAddBotModal(server) {
+      document.getElementById('modal-title').textContent = 'Bot Ekle';
       els.modalServerIp.value = server.serverIp;
+      els.modalServerIp.readOnly = true;
       els.modalServerPort.value = server.serverPort;
+      els.modalServerPort.readOnly = true;
       els.modalBotVersion.value = server.version;
       els.modalProxy.value = server.hasProxy ? (server.proxy || '') : '';
       els.modalBotNames.value = '';
       els.modalAddBot.classList.add('active');
+    }
+
+    function openAddServerModal() {
+      document.getElementById('modal-title').textContent = 'Yeni Sunucu Ekle';
+      els.modalServerIp.value = '';
+      els.modalServerIp.readOnly = false;
+      els.modalServerPort.value = '25565';
+      els.modalServerPort.readOnly = false;
+      els.modalBotVersion.value = '1.20.1';
+      els.modalProxy.value = '';
+      els.modalBotNames.value = '';
+      els.modalAddBot.classList.add('active');
+      setTimeout(() => els.modalServerIp.focus(), 100);
     }
 
     els.btnPanelAddBot.addEventListener('click', () => {
@@ -1689,6 +1746,28 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Yeni Sunucu Ekle butonları
+    document.getElementById('btn-new-server').addEventListener('click', () => {
+      openAddServerModal();
+    });
+    document.getElementById('btn-new-server-empty').addEventListener('click', () => {
+      openAddServerModal();
+    });
+
+    function openAddServerModal() {
+      // Modal'ı boş sunucu bilgileriyle aç
+      els.modalServerIp.value = '';
+      els.modalServerIp.readOnly = false;
+      els.modalServerPort.value = '25565';
+      els.modalServerPort.readOnly = false;
+      els.modalBotVersion.value = '1.20.1';
+      els.modalProxy.value = '';
+      els.modalBotNames.value = '';
+      els.modalAddBot.classList.add('active');
+      // IP input'a focus
+      setTimeout(() => els.modalServerIp.focus(), 100);
     }
 
     renderServerBrowser();
