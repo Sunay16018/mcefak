@@ -1,6 +1,13 @@
 /**
- * Bot Yöneticisi - Minecraft AFK Client
- * Bot ekleme/çıkarma, SOCKS5 proxy, RAM limiti, olay yönetimi
+ * Bot Yöneticisi v2.0 - Minecraft AFK Client
+ * 
+ * Yeni özellikler:
+ * - Sunucu bazlı bot gruplama (serverKey = ip:port)
+ * - Toplu bot ekleme/çıkarma
+ * - Toplu Anti-AFK toggle
+ * - Toplu mesaj gönderme
+ * - SOCKS5 proxy desteği
+ * - Dinamik RAM limiti
  */
 
 const mineflayer = require('mineflayer');
@@ -11,17 +18,10 @@ const AntiAfk = require('./antiAfk');
 
 // ── Yardımcı Fonksiyonlar ───────────────────────────────────────
 
-/**
- * Rastgele benzersiz ID üretir
- */
 function generateId() {
   return `bot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/**
- * SOCKS5 proxy bilgisini ayrıştırır
- * Format: "ip:port" veya "host:port"
- */
 function parseProxy(proxyString) {
   if (!proxyString || !proxyString.includes(':')) return null;
   const [host, portStr] = proxyString.split(':');
@@ -30,9 +30,6 @@ function parseProxy(proxyString) {
   return { host: host.trim(), port };
 }
 
-/**
- * Mineflayer chat mesajını düz metne dönüştürür
- */
 function extractChatText(message) {
   if (typeof message === 'string') return message;
   if (message && typeof message.toString === 'function') {
@@ -41,14 +38,15 @@ function extractChatText(message) {
   return JSON.stringify(message);
 }
 
+function getServerKey(ip, port) {
+  return `${ip}:${port}`;
+}
+
 // ── Bot Yöneticisi Sınıfı ───────────────────────────────────────
 class BotManager {
-  /**
-   * @param {Server} io - Socket.io sunucu instance
-   */
   constructor(io) {
     this.io = io;
-    /** @type {Map<string, Object>} - Aktif botlar */
+    /** @type {Map<string, Object>} - Aktif botlar (id -> botData) */
     this.bots = new Map();
     /** @type {number} - Bot başına tahmini RAM (MB) */
     this.ramPerBot = 200;
@@ -60,38 +58,25 @@ class BotManager {
 
   // ── RAM & Limit Hesaplamaları ───────────────────────────────
 
-  /**
-   * Sistem RAM'ine göre dinamik bot limiti hesaplar
-   * @returns {{ maxBots: number, usedRamMB: number, totalRamMB: number, botCount: number }}
-   */
   getRamUsage() {
     const totalRamMB = Math.floor(os.totalmem() / 1024 / 1024);
     const usedRamMB = Math.floor((os.totalmem() - os.freemem()) / 1024 / 1024);
     const availableRamMB = totalRamMB - usedRamMB;
 
-    // Manuel limit varsa onu kullan, yoksa RAM'e göre hesapla
     let maxBots;
     if (this.manualMaxBots !== null) {
       maxBots = this.manualMaxBots;
     } else {
-      // Kullanılabilir RAM'in %60'ını botlara ayır
       const allocatableRam = Math.floor(availableRamMB * 0.6);
       maxBots = Math.max(this.minBots, Math.floor(allocatableRam / this.ramPerBot));
-      // Güvenlik tavanı
       maxBots = Math.min(maxBots, 20);
     }
 
-    return {
-      maxBots,
-      usedRamMB,
-      totalRamMB,
-      botCount: this.bots.size
-    };
+    return { maxBots, usedRamMB, totalRamMB, botCount: this.bots.size };
   }
 
-  /**
-   * Tüm botların özet bilgilerini döndürür (arayüz için)
-   */
+  // ── Bot Verisi Dönüştürücü (Arayüz için) ──────────────────
+
   getAllBots() {
     const bots = [];
     for (const [id, data] of this.bots) {
@@ -101,6 +86,7 @@ class BotManager {
         status: data.status,
         serverIp: data.serverIp,
         serverPort: data.serverPort,
+        serverKey: data.serverKey,
         version: data.version,
         hasProxy: data.hasProxy,
         antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
@@ -110,22 +96,46 @@ class BotManager {
     return bots;
   }
 
+  /**
+   * Sunucu bazlı gruplanmış botları döndürür
+   */
+  getBotsByServer() {
+    const servers = new Map();
+
+    for (const [id, data] of this.bots) {
+      const key = data.serverKey;
+      if (!servers.has(key)) {
+        servers.set(key, {
+          serverKey: key,
+          serverIp: data.serverIp,
+          serverPort: data.serverPort,
+          version: data.version,
+          hasProxy: data.hasProxy,
+          proxyConfig: data.proxyConfig,
+          bots: []
+        });
+      }
+      servers.get(key).bots.push({
+        id,
+        name: data.name,
+        status: data.status,
+        antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
+        playerCount: data.players ? data.players.length : 0
+      });
+    }
+
+    return Array.from(servers.values());
+  }
+
   // ── Bot Ekleme ──────────────────────────────────────────────
 
-  /**
-   * Yeni bir bot oluşturur ve sunucuya bağlar
-   * @param {Object} config - Bot yapılandırması
-   * @returns {Promise<{success: boolean, message: string}>}
-   */
   async addBot(config) {
     const { ip, port = 25565, botName, version, proxy } = config;
 
-    // Validasyon
     if (!ip || !botName) {
       return { success: false, message: 'IP ve bot adı zorunludur.' };
     }
 
-    // Limit kontrolü
     const ramUsage = this.getRamUsage();
     if (this.bots.size >= ramUsage.maxBots) {
       return { 
@@ -137,14 +147,15 @@ class BotManager {
     const botId = generateId();
     const serverPort = parseInt(port, 10) || 25565;
     const proxyConfig = parseProxy(proxy);
+    const serverKey = getServerKey(ip, serverPort);
 
-    // Bot veri yapısı
     const botData = {
       id: botId,
       name: botName,
       status: 'connecting',
       serverIp: ip,
       serverPort,
+      serverKey,
       version: version || '1.20.1',
       hasProxy: !!proxyConfig,
       proxyConfig,
@@ -157,27 +168,23 @@ class BotManager {
     this.bots.set(botId, botData);
     this.emitBotUpdate();
 
-    // Bağlantıyı başlat
     try {
       await this._connectBot(botData);
-      return { success: true, message: `\"${botName}\" botu bağlanıyor...` };
+      return { success: true, message: `"${botName}" botu bağlanıyor...` };
     } catch (err) {
       this._cleanupBot(botId);
       return { success: false, message: `Bağlantı hatası: ${err.message}` };
     }
   }
 
-  /**
-   * Mineflayer botunu SOCKS5 proxy ile bağlar
-   * @param {Object} botData - Bot veri yapısı
-   */
+  // ── SOCKS5 Proxy ile Bağlantı ───────────────────────────────
+
   async _connectBot(botData) {
     const { serverIp, serverPort, name, version, proxyConfig } = botData;
 
     return new Promise((resolve, reject) => {
       let resolved = false;
 
-      // 30 saniyelik timeout
       botData.connectTimeout = setTimeout(() => {
         if (!resolved) {
           resolved = true;
@@ -188,10 +195,8 @@ class BotManager {
       const botOptions = {
         username: name,
         version: version || '1.20.1',
-        // host'u kaldırıyoruz çünkü connect fonksiyonu ile manuel bağlanıyoruz
       };
 
-      // SOCKS5 proxy varsa connect fonksiyonu ekle
       if (proxyConfig) {
         botOptions.connect = (client) => {
           SocksClient.createConnection({
@@ -218,15 +223,12 @@ class BotManager {
             client.emit('connect');
           });
         };
-        // Bazı sunucular fakeHost gerektirir
         botOptions.fakeHost = serverIp;
       } else {
-        // Proxy yoksa direkt bağlan
         botOptions.host = serverIp;
         botOptions.port = serverPort;
       }
 
-      // Bot oluştur
       const bot = mineflayer.createBot(botOptions);
       botData.instance = bot;
 
@@ -240,7 +242,6 @@ class BotManager {
           this.emitBotUpdate();
           this.emitChatMessage(botData.id, 'system', '✅ Sunucuya giriş yapıldı.');
 
-          // Anti-AFK başlat (varsayılan kapalı)
           botData.antiAfk = new AntiAfk(bot);
 
           resolve();
@@ -252,13 +253,12 @@ class BotManager {
       });
 
       bot.on('chat', (username, message) => {
-        if (username === bot.username) return; // Kendi mesajlarını atla
+        if (username === bot.username) return;
         this.emitChatMessage(botData.id, 'chat', `[${username}] ${message}`);
       });
 
       bot.on('message', (message) => {
         const text = extractChatText(message);
-        // Sistem mesajlarını ve whisper'ları yakala
         if (text && text.trim()) {
           this.emitChatMessage(botData.id, 'info', text);
         }
@@ -305,7 +305,6 @@ class BotManager {
         this.emitChatMessage(botData.id, 'system', '🔌 Sunucu bağlantısı sonlandı.');
         this.emitBotUpdate();
 
-        // Anti-AFK durdur
         if (botData.antiAfk) {
           botData.antiAfk.stop();
         }
@@ -315,9 +314,6 @@ class BotManager {
 
   // ── Oyuncu Listesi ──────────────────────────────────────────
 
-  /**
-   * Botun oyuncu listesini günceller
-   */
   _updatePlayerList(botData) {
     if (!botData.instance || !botData.instance.players) return;
 
@@ -328,9 +324,6 @@ class BotManager {
     }));
   }
 
-  /**
-   * Oyuncu listesini döndürür
-   */
   getPlayerList(botId) {
     const botData = this.bots.get(botId);
     if (!botData) {
@@ -346,9 +339,6 @@ class BotManager {
 
   // ── Mesaj Gönderme ──────────────────────────────────────────
 
-  /**
-   * Bot üzerinden sunucuya mesaj gönderir
-   */
   sendMessage(botId, message) {
     const botData = this.bots.get(botId);
     if (!botData) {
@@ -367,11 +357,34 @@ class BotManager {
     }
   }
 
-  // ── Anti-AFK Toggle ─────────────────────────────────────────
-
   /**
-   * Bot için Anti-AFK modunu açar/kapatır
+   * Sunucudaki tüm botlara mesaj gönder
    */
+  broadcastMessage(serverKey, message) {
+    let sent = 0;
+    let failed = 0;
+
+    for (const [id, botData] of this.bots) {
+      if (botData.serverKey === serverKey && botData.status === 'online') {
+        try {
+          botData.instance.chat(message);
+          this.emitChatMessage(id, 'self', `→ ${message}`);
+          sent++;
+        } catch (err) {
+          failed++;
+        }
+      }
+    }
+
+    if (sent === 0) {
+      return { success: false, message: 'Gönderilecek aktif bot bulunamadı.' };
+    }
+
+    return { success: true, message: `${sent} bot'a mesaj gönderildi.${failed > 0 ? ` (${failed} başarısız)` : ''}` };
+  }
+
+  // ── Anti-AFK ────────────────────────────────────────────────
+
   toggleAntiAfk(botId, enabled) {
     const botData = this.bots.get(botId);
     if (!botData) {
@@ -393,17 +406,39 @@ class BotManager {
     }
     this.emitBotUpdate();
 
-    return { 
-      success: true, 
-      message: `Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` 
-    };
+    return { success: true, message: `Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` };
+  }
+
+  /**
+   * Sunucudaki tüm botlarda Anti-AFK toggle
+   */
+  toggleAllAntiAfk(serverKey, enabled) {
+    let toggled = 0;
+
+    for (const [id, botData] of this.bots) {
+      if (botData.serverKey === serverKey && botData.status === 'online' && botData.antiAfk) {
+        if (enabled) {
+          botData.antiAfk.start();
+          this.emitChatMessage(id, 'system', '🛡️ Anti-AFK aktifleştirildi.');
+        } else {
+          botData.antiAfk.stop();
+          this.emitChatMessage(id, 'system', '🛡️ Anti-AFK devre dışı bırakıldı.');
+        }
+        toggled++;
+      }
+    }
+
+    this.emitBotUpdate();
+
+    if (toggled === 0) {
+      return { success: false, message: 'Aktif bot bulunamadı.' };
+    }
+
+    return { success: true, message: `${toggled} bot'ta Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` };
   }
 
   // ── Bot Çıkarma ─────────────────────────────────────────────
 
-  /**
-   * Botu sunucudan çıkarır ve kaynakları temizler
-   */
   removeBot(botId) {
     const botData = this.bots.get(botId);
     if (!botData) {
@@ -411,27 +446,46 @@ class BotManager {
     }
 
     this._cleanupBot(botId);
-    return { success: true, message: `\"${botData.name}\" botu çıkarıldı.` };
+    return { success: true, message: `"${botData.name}" botu çıkarıldı.` };
   }
 
   /**
-   * Bot kaynaklarını temizler
+   * Sunucudaki tüm botları çıkar
    */
+  removeServerBots(serverKey) {
+    let removed = 0;
+    const toRemove = [];
+
+    for (const [id, botData] of this.bots) {
+      if (botData.serverKey === serverKey) {
+        toRemove.push(id);
+      }
+    }
+
+    for (const id of toRemove) {
+      this._cleanupBot(id);
+      removed++;
+    }
+
+    if (removed === 0) {
+      return { success: false, message: 'Bu sunucuda bot bulunamadı.' };
+    }
+
+    return { success: true, message: `${removed} bot çıkarıldı.` };
+  }
+
   _cleanupBot(botId) {
     const botData = this.bots.get(botId);
     if (!botData) return;
 
-    // Timeout temizle
     if (botData.connectTimeout) {
       clearTimeout(botData.connectTimeout);
     }
 
-    // Anti-AFK durdur
     if (botData.antiAfk) {
       botData.antiAfk.stop();
     }
 
-    // Bot bağlantısını sonlandır
     if (botData.instance) {
       try {
         botData.instance.end();
@@ -445,9 +499,6 @@ class BotManager {
     this.emitBotUpdate();
   }
 
-  /**
-   * Tüm botları temizler (shutdown için)
-   */
   destroyAll() {
     for (const [botId] of this.bots) {
       this._cleanupBot(botId);
@@ -456,16 +507,11 @@ class BotManager {
 
   // ── Socket.io Yayınları ─────────────────────────────────────
 
-  /**
-   * Bot listesi güncellemesini tüm istemcilere yayınlar
-   */
   emitBotUpdate() {
     this.io.emit('bot-update', this.getAllBots());
+    this.io.emit('server-bots', this.getBotsByServer());
   }
 
-  /**
-   * Chat mesajını tüm istemcilere yayınlar
-   */
   emitChatMessage(botId, type, text) {
     const timestamp = new Date().toLocaleTimeString('tr-TR');
     this.io.emit('chat-message', { botId, type, text, timestamp });
