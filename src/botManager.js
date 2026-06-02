@@ -33,9 +33,24 @@ function parseProxy(proxyString) {
 function extractChatText(message) {
   if (typeof message === 'string') return message;
   if (message && typeof message.toString === 'function') {
-    return message.toString();
+    try {
+      const str = message.toString();
+      if (str && str !== '[object Object]') return str;
+    } catch (e) {}
   }
-  return JSON.stringify(message);
+  if (message && message.json) {
+    try {
+      return JSON.stringify(message.json);
+    } catch (e) {}
+  }
+  if (message && message.text) {
+    return message.text;
+  }
+  try {
+    return JSON.stringify(message);
+  } catch (e) {
+    return String(message);
+  }
 }
 
 function getServerKey(ip, port) {
@@ -257,9 +272,12 @@ class BotManager {
         this.emitChatMessage(botData.id, 'chat', `[${username}] ${message}`);
       });
 
-      bot.on('message', (message) => {
-        const text = extractChatText(message);
-        if (text && text.trim()) {
+      bot.on('message', (jsonMsg, position) => {
+        // Sadece chat ve system mesajlarını yakala (game_info = action bar)
+        if (position === 'game_info') return;
+
+        const text = extractChatText(jsonMsg);
+        if (text && text.trim() && text !== '[object Object]') {
           this.emitChatMessage(botData.id, 'info', text);
         }
       });
