@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft AFK Client</title>
+  <title>Minecraft AFK Client v2.0</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    /* ── CSS Değişkenleri ───────────────────────────────────── */
     :root {
       --bg-primary: #0d1117;
       --bg-secondary: #161b22;
       --bg-tertiary: #21262d;
       --bg-card: #1c2128;
+      --bg-hover: #1f242c;
       --border: #30363d;
       --border-hover: #484f58;
       --text-primary: #c9d1d9;
@@ -26,11 +26,11 @@
       --offline: #6e7681;
       --error-status: #f85149;
       --connecting: #d29922;
-      --radius: 10px;
-      --radius-sm: 6px;
-      --shadow: 0 4px 20px rgba(0,0,0,0.4);
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-      --transition: all 0.2s ease;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.5);
+      --shadow-sm: 0 2px 12px rgba(0,0,0,0.3);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,11 +43,10 @@
       line-height: 1.5;
     }
 
-    /* ── Üst Bar ─────────────────────────────────────────────── */
     .topbar {
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
+      padding: 14px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -59,32 +58,33 @@
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .logo-icon {
-      width: 36px; height: 36px;
+      width: 40px; height: 40px;
       background: linear-gradient(135deg, #58a6ff, #238636);
       border-radius: var(--radius-sm);
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(88,166,255,0.3);
     }
 
     .logo h1 {
-      font-size: 1.3rem;
-      font-weight: 600;
+      font-size: 1.4rem;
+      font-weight: 700;
       letter-spacing: -0.5px;
     }
 
     .logo span {
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 400;
     }
 
     .stats {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       align-items: center;
     }
 
@@ -93,112 +93,374 @@
       align-items: center;
       gap: 8px;
       background: var(--bg-tertiary);
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
     }
 
-    .stat-item .icon { font-size: 1rem; }
-    .stat-item .value { font-weight: 600; color: var(--accent); }
+    .stat-item .icon { font-size: 1.1rem; }
+    .stat-item .value { font-weight: 700; color: var(--accent); font-size: 1rem; }
     .stat-item .label { color: var(--text-secondary); }
 
-    /* ── Ana İçerik ──────────────────────────────────────────── */
+    .page { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+
     .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 28px;
     }
 
-    /* ── Bot Ekleme Formu ───────────────────────────────────── */
-    .add-bot-section {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .add-bot-section h2 {
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-      display: flex;
+    .back-btn {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 20px;
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    .back-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+      transform: translateX(-4px);
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-primary);
+    }
+
+    .server-list {
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .form-group input, .form-group select {
-      background: var(--bg-tertiary);
+    .server-card {
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      color: var(--text-primary);
-      font-size: 0.9rem;
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
       transition: var(--transition);
-      outline: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
 
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.15);
+    .server-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--border);
+      transition: var(--transition);
     }
 
-    .form-group input::placeholder {
+    .server-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .server-card:hover::before { background: var(--accent); }
+    .server-card.has-online::before { background: var(--online); }
+    .server-card.has-error::before { background: var(--error); }
+    .server-card.has-connecting::before { background: var(--connecting); }
+
+    .server-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      image-rendering: pixelated;
+    }
+
+    .server-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .server-icon .icon-placeholder {
+      font-size: 28px;
+      opacity: 0.4;
+    }
+
+    .server-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .server-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .server-motd {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .server-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .server-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .version-badge {
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .proxy-badge {
+      background: rgba(211, 153, 34, 0.12);
+      color: var(--warning);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .player-count {
+      text-align: right;
+      flex-shrink: 0;
+      min-width: 100px;
+    }
+
+    .player-count .count {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .player-count .count span {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 1rem;
+    }
+
+    .player-count .label {
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    .btn-primary {
+    .server-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-add-bot {
       background: linear-gradient(135deg, #238636, #2ea043);
       color: white;
       border: none;
       border-radius: var(--radius-sm);
-      padding: 10px 24px;
-      font-size: 0.9rem;
+      padding: 10px 20px;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      height: fit-content;
-      align-self: flex-end;
+      gap: 6px;
+      white-space: nowrap;
     }
 
-    .btn-primary:hover {
+    .btn-add-bot:hover {
       background: linear-gradient(135deg, #2ea043, #3fb950);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(46, 160, 67, 0.35);
     }
 
-    .btn-primary:active { transform: translateY(0); }
+    .btn-remove-all {
+      background: rgba(248, 81, 73, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-remove-all:hover {
+      background: rgba(248, 81, 73, 0.2);
+      border-color: var(--error);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(6px);
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: modalSlide 0.25s ease;
+    }
+
+    @keyframes modalSlide {
+      from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover { 
+      background: var(--bg-tertiary);
+      color: var(--text-primary); 
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      transition: var(--transition);
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    .form-group input::placeholder, .form-group textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
 
     .form-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      align-items: flex-end;
-      flex-wrap: wrap;
     }
 
     .proxy-input-wrapper {
@@ -208,31 +470,132 @@
     .proxy-input-wrapper::before {
       content: "🧦";
       position: absolute;
-      left: 10px;
+      left: 12px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 0.85rem;
-      opacity: 0.6;
+      font-size: 0.9rem;
+      opacity: 0.5;
     }
 
     .proxy-input-wrapper input {
-      padding-left: 32px;
+      padding-left: 36px;
     }
 
-    /* ── Bot Kartları Grid ──────────────────────────────────── */
+    .hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2ea043, #3fb950);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(46, 160, 67, 0.35);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .panel-title .server-icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    .panel-title h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .panel-title .panel-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-panel {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-panel:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+
+    .btn-panel.danger {
+      color: var(--error);
+      border-color: rgba(248, 81, 73, 0.3);
+    }
+
+    .btn-panel.danger:hover {
+      background: rgba(248, 81, 73, 0.15);
+      border-color: var(--error);
+    }
+
+    .btn-panel.active {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent);
+      border-color: rgba(88, 166, 255, 0.4);
+    }
+
     .bots-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
       gap: 16px;
     }
 
     @media (max-width: 480px) {
-      .bots-grid {
-        grid-template-columns: 1fr;
-      }
+      .bots-grid { grid-template-columns: 1fr; }
     }
 
-    /* ── Bot Kartı ──────────────────────────────────────────── */
     .bot-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -280,26 +643,17 @@
     }
 
     .bot-name {
-      font-weight: 600;
+      font-weight: 700;
       font-size: 1rem;
     }
 
     .bot-meta {
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 8px;
       margin-top: 2px;
-    }
-
-    .proxy-badge {
-      background: rgba(88, 166, 255, 0.15);
-      color: var(--accent);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 500;
     }
 
     .bot-actions {
@@ -311,18 +665,18 @@
       background: var(--bg-tertiary);
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      width: 32px; height: 32px;
+      width: 34px; height: 34px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: var(--transition);
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
 
     .btn-icon:hover {
-      background: var(--bg-primary);
+      background: var(--bg-hover);
       color: var(--text-primary);
       border-color: var(--border-hover);
     }
@@ -339,9 +693,8 @@
       border-color: var(--accent);
     }
 
-    /* ── Konsol ──────────────────────────────────────────────── */
     .bot-console {
-      height: 220px;
+      height: 200px;
       overflow-y: auto;
       padding: 12px 16px;
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -350,18 +703,9 @@
       background: #0a0c10;
     }
 
-    .bot-console::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .bot-console::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .bot-console::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
+    .bot-console::-webkit-scrollbar { width: 6px; }
+    .bot-console::-webkit-scrollbar-track { background: transparent; }
+    .bot-console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .console-line {
       padding: 2px 0;
@@ -381,7 +725,6 @@
     .console-line.self { color: var(--success); font-style: italic; }
     .console-line.info { color: var(--text-secondary); }
 
-    /* ── Bot Alt Kontroller ─────────────────────────────────── */
     .bot-controls {
       padding: 10px 16px;
       border-top: 1px solid var(--border);
@@ -403,9 +746,7 @@
       transition: var(--transition);
     }
 
-    .bot-controls input:focus {
-      border-color: var(--accent);
-    }
+    .bot-controls input:focus { border-color: var(--accent); }
 
     .btn-send {
       background: var(--accent);
@@ -414,157 +755,104 @@
       border-radius: var(--radius-sm);
       padding: 8px 16px;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
     }
 
-    .btn-send:hover {
-      background: var(--accent-hover);
-    }
-
-    /* ── Oyuncu Listesi Modal ───────────────────────────────── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      backdrop-filter: blur(4px);
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .modal {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 90%;
-      max-width: 400px;
-      max-height: 70vh;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-    }
-
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header h3 {
-      font-size: 1rem;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 4px;
-      transition: var(--transition);
-    }
-
-    .modal-close:hover { color: var(--text-primary); }
-
-    .modal-body {
-      padding: 0;
-      max-height: 50vh;
-      overflow-y: auto;
-    }
+    .btn-send:hover { background: var(--accent-hover); }
 
     .player-list {
       list-style: none;
     }
 
     .player-item {
-      padding: 10px 20px;
+      padding: 12px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       font-size: 0.9rem;
+      transition: var(--transition);
     }
 
+    .player-item:hover { background: var(--bg-tertiary); }
     .player-item:last-child { border-bottom: none; }
 
     .player-item .ping {
       margin-left: auto;
       font-size: 0.75rem;
-      color: var(--text-muted);
-      background: var(--bg-tertiary);
-      padding: 2px 8px;
+      font-weight: 600;
+      padding: 3px 10px;
       border-radius: 4px;
     }
 
-    .player-item .ping.good { color: var(--success); }
-    .player-item .ping.medium { color: var(--warning); }
-    .player-item .ping.bad { color: var(--error); }
+    .player-item .ping.good { color: var(--success); background: rgba(63, 185, 80, 0.1); }
+    .player-item .ping.medium { color: var(--warning); background: rgba(210, 153, 34, 0.1); }
+    .player-item .ping.bad { color: var(--error); background: rgba(248, 81, 73, 0.1); }
 
-    /* ── Sistem Mesajları Toast ──────────────────────────────── */
     .toast-container {
       position: fixed;
-      top: 80px;
-      right: 24px;
+      top: 90px;
+      right: 28px;
       z-index: 1001;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .toast {
-      padding: 12px 18px;
+      padding: 14px 20px;
       border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      font-weight: 500;
-      animation: slideIn 0.3s ease;
-      max-width: 320px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      max-width: 360px;
       word-break: break-word;
       border: 1px solid transparent;
+      backdrop-filter: blur(10px);
     }
 
     @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      from { transform: translateX(100%) scale(0.9); opacity: 0; }
+      to { transform: translateX(0) scale(1); opacity: 1; }
     }
 
     .toast.success {
-      background: rgba(46, 160, 67, 0.15);
+      background: rgba(46, 160, 67, 0.12);
       color: var(--success);
-      border-color: rgba(46, 160, 67, 0.3);
+      border-color: rgba(46, 160, 67, 0.25);
     }
 
     .toast.error {
-      background: rgba(248, 81, 73, 0.15);
+      background: rgba(248, 81, 73, 0.12);
       color: var(--error);
-      border-color: rgba(248, 81, 73, 0.3);
+      border-color: rgba(248, 81, 73, 0.25);
     }
 
-    /* ── Boş Durum ──────────────────────────────────────────── */
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 80px 20px;
       color: var(--text-muted);
     }
 
     .empty-state .icon {
-      font-size: 3rem;
-      margin-bottom: 16px;
-      opacity: 0.5;
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.4;
     }
 
     .empty-state h3 {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       color: var(--text-secondary);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      font-weight: 600;
     }
 
-    /* ── Responsive ─────────────────────────────────────────── */
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 768px) {
       .topbar {
         flex-direction: column;
@@ -580,28 +868,51 @@
 
       .container { padding: 16px; }
 
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .form-row {
+      .server-card {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
+        gap: 12px;
       }
 
-      .btn-primary { width: 100%; }
+      .server-actions {
+        width: 100%;
+      }
+
+      .btn-add-bot, .btn-remove-all {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .player-count {
+        text-align: left;
+        width: 100%;
+      }
+
+      .form-row { grid-template-columns: 1fr; }
+
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .panel-actions {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .bots-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Üst Bar -->
   <header class="topbar">
     <div class="logo">
       <div class="logo-icon">⛏️</div>
       <div>
         <h1>Minecraft AFK Client</h1>
-        <span>v1.0.0 • Node.js + Mineflayer</span>
+        <span>v2.0.0 • Server Browser + Bot Kontrol</span>
       </div>
     </div>
     <div class="stats">
@@ -621,29 +932,82 @@
     </div>
   </header>
 
-  <!-- Ana İçerik -->
-  <main class="container">
+  <main class="container page" id="page-server-browser">
+    <h2 class="section-title">🌐 Sunucu Listesi</h2>
 
-    <!-- Bot Ekleme Formu -->
-    <section class="add-bot-section">
-      <h2>➕ Yeni Bot Ekle</h2>
-      <div class="form-row">
-        <div class="form-grid" style="flex:1">
-          <div class="form-group">
-            <label>Sunucu IP</label>
-            <input type="text" id="server-ip" placeholder="örn: mc.example.com" autocomplete="off">
+    <div id="server-list" class="server-list"></div>
+
+    <div id="server-empty" class="empty-state" style="display:none">
+      <div class="icon">🌐</div>
+      <h3>Henüz sunucu yok</h3>
+      <p>Bot eklediğinizde sunucular burada görünecek.</p>
+    </div>
+  </main>
+
+  <main class="container page hidden" id="page-bot-panel">
+    <button class="back-btn" id="btn-back">
+      <span>←</span> Sunucu Listesine Dön
+    </button>
+
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="server-icon" id="panel-icon">
+          <span class="icon-placeholder">🖥️</span>
+        </div>
+        <div>
+          <h2 id="panel-server-name">Sunucu Adı</h2>
+          <div class="panel-meta">
+            <span id="panel-server-ip">ip:port</span>
+            <span>•</span>
+            <span id="panel-version">1.20.1</span>
+            <span id="panel-proxy-badge" class="proxy-badge" style="display:none">🧦 SOCKS5</span>
           </div>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-panel" id="btn-panel-add-bot">
+          <span>➕</span> Bot Ekle
+        </button>
+        <button class="btn-panel" id="btn-panel-antiafk-all">
+          <span>🛡️</span> Tüm Anti-AFK
+        </button>
+        <button class="btn-panel" id="btn-panel-broadcast">
+          <span>📢</span> Toplu Mesaj
+        </button>
+        <button class="btn-panel danger" id="btn-panel-remove-all">
+          <span>🗑️</span> Tümünü Çıkar
+        </button>
+      </div>
+    </div>
+
+    <div id="bots-container" class="bots-grid"></div>
+
+    <div id="panel-empty" class="empty-state" style="display:none">
+      <div class="icon">🤖</div>
+      <h3>Bu sunucuda bot yok</h3>
+      <p>Yukarıdaki "Bot Ekle" butonundan yeni bot ekleyin.</p>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modal-add-bot">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><span>➕</span> Yeni Bot Ekle</h3>
+        <button class="modal-close" id="modal-add-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Sunucu IP</label>
+          <input type="text" id="modal-server-ip" readonly>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Port</label>
-            <input type="number" id="server-port" placeholder="25565" value="25565">
-          </div>
-          <div class="form-group">
-            <label>Bot Adı</label>
-            <input type="text" id="bot-name" placeholder="örn: AFKBot1" autocomplete="off">
+            <input type="number" id="modal-server-port" readonly>
           </div>
           <div class="form-group">
             <label>Sürüm</label>
-            <select id="bot-version">
+            <select id="modal-bot-version">
               <option value="1.20.1">1.20.1</option>
               <option value="1.19.4">1.19.4</option>
               <option value="1.18.2">1.18.2</option>
@@ -653,36 +1017,48 @@
               <option value="1.8.9">1.8.9</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>SOCKS5 Proxy (opsiyonel)</label>
-            <div class="proxy-input-wrapper">
-              <input type="text" id="proxy-string" placeholder="ip:port" autocomplete="off">
-            </div>
+        </div>
+        <div class="form-group">
+          <label>Bot Adları (her satıra bir isim)</label>
+          <textarea id="modal-bot-names" placeholder="AFKBot1&#10;AFKBot2&#10;AFKBot3"></textarea>
+          <div class="hint">Her satıra bir bot adı yazın. Birden fazla bot aynı anda eklenecek.</div>
+        </div>
+        <div class="form-group">
+          <label>SOCKS5 Proxy (opsiyonel)</label>
+          <div class="proxy-input-wrapper">
+            <input type="text" id="modal-proxy" placeholder="ip:port">
           </div>
         </div>
-        <button class="btn-primary" id="btn-add-bot">
-          <span>➕</span> Bot Ekle
+        <button class="btn-primary" id="btn-modal-add">
+          <span>🚀</span> Bot(lar)ı Ekle
         </button>
       </div>
-    </section>
-
-    <!-- Bot Kartları -->
-    <div id="bots-container" class="bots-grid"></div>
-
-    <div id="empty-state" class="empty-state" style="display:none">
-      <div class="icon">🤖</div>
-      <h3>Henüz bot yok</h3>
-      <p>Yukarıdaki formdan yeni bir bot ekleyin.</p>
     </div>
+  </div>
 
-  </main>
-
-  <!-- Oyuncu Listesi Modal -->
-  <div class="modal-overlay" id="player-modal">
+  <div class="modal-overlay" id="modal-broadcast">
     <div class="modal">
       <div class="modal-header">
-        <h3>👥 Çevrimiçi Oyuncular</h3>
-        <button class="modal-close" id="modal-close">✕</button>
+        <h3><span>📢</span> Toplu Mesaj Gönder</h3>
+        <button class="modal-close" id="modal-broadcast-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mesaj</label>
+          <input type="text" id="broadcast-message" placeholder="Tüm botlara gönderilecek mesaj...">
+        </div>
+        <button class="btn-primary" id="btn-broadcast-send">
+          <span>📨</span> Gönder
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-players">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><span>👥</span> Çevrimiçi Oyuncular</h3>
+        <button class="modal-close" id="modal-players-close">✕</button>
       </div>
       <div class="modal-body">
         <ul class="player-list" id="player-list"></ul>
@@ -690,11 +1066,9 @@
     </div>
   </div>
 
-  <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
   <script>
-    // ── Socket.io Bağlantısı ───────────────────────────────────
     const socket = io({
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -702,41 +1076,58 @@
       reconnectionDelay: 2000
     });
 
-    // ── Durum ──────────────────────────────────────────────────
     const state = {
-      bots: new Map(),      // id -> bot verisi
-      consoles: new Map(),  // id -> mesaj dizisi
-      currentPlayerListBot: null
+      bots: new Map(),
+      consoles: new Map(),
+      servers: new Map(),
+      currentServerKey: null,
+      currentPlayerListBot: null,
+      antiAfkAllState: false
     };
 
-    // ── DOM Referansları ───────────────────────────────────────
+    const pages = {
+      browser: document.getElementById('page-server-browser'),
+      panel: document.getElementById('page-bot-panel')
+    };
+
     const els = {
-      serverIp: document.getElementById('server-ip'),
-      serverPort: document.getElementById('server-port'),
-      botName: document.getElementById('bot-name'),
-      botVersion: document.getElementById('bot-version'),
-      proxyString: document.getElementById('proxy-string'),
-      btnAddBot: document.getElementById('btn-add-bot'),
+      serverList: document.getElementById('server-list'),
+      serverEmpty: document.getElementById('server-empty'),
       botsContainer: document.getElementById('bots-container'),
-      emptyState: document.getElementById('empty-state'),
+      panelEmpty: document.getElementById('panel-empty'),
       ramUsage: document.getElementById('ram-usage'),
       botCount: document.getElementById('bot-count'),
       botLimit: document.getElementById('bot-limit'),
-      playerModal: document.getElementById('player-modal'),
-      playerList: document.getElementById('player-list'),
-      modalClose: document.getElementById('modal-close'),
-      toastContainer: document.getElementById('toast-container')
+      btnBack: document.getElementById('btn-back'),
+      panelServerName: document.getElementById('panel-server-name'),
+      panelServerIp: document.getElementById('panel-server-ip'),
+      panelVersion: document.getElementById('panel-version'),
+      panelProxyBadge: document.getElementById('panel-proxy-badge'),
+      panelIcon: document.getElementById('panel-icon'),
+      btnPanelAddBot: document.getElementById('btn-panel-add-bot'),
+      btnPanelAntiAfk: document.getElementById('btn-panel-antiafk-all'),
+      btnPanelBroadcast: document.getElementById('btn-panel-broadcast'),
+      btnPanelRemoveAll: document.getElementById('btn-panel-remove-all'),
+      toastContainer: document.getElementById('toast-container'),
+      modalAddBot: document.getElementById('modal-add-bot'),
+      modalAddClose: document.getElementById('modal-add-close'),
+      modalServerIp: document.getElementById('modal-server-ip'),
+      modalServerPort: document.getElementById('modal-server-port'),
+      modalBotVersion: document.getElementById('modal-bot-version'),
+      modalBotNames: document.getElementById('modal-bot-names'),
+      modalProxy: document.getElementById('modal-proxy'),
+      btnModalAdd: document.getElementById('btn-modal-add'),
+      modalBroadcast: document.getElementById('modal-broadcast'),
+      modalBroadcastClose: document.getElementById('modal-broadcast-close'),
+      broadcastMessage: document.getElementById('broadcast-message'),
+      btnBroadcastSend: document.getElementById('btn-broadcast-send'),
+      modalPlayers: document.getElementById('modal-players'),
+      modalPlayersClose: document.getElementById('modal-players-close'),
+      playerList: document.getElementById('player-list')
     };
 
-    // ── Socket Olayları ────────────────────────────────────────
-
-    socket.on('connect', () => {
-      console.log('[Socket] Bağlandı');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('[Socket] Bağlantı kesildi');
-    });
+    socket.on('connect', () => console.log('[Socket] Bağlandı'));
+    socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
     socket.on('ram-usage', (data) => {
       els.ramUsage.textContent = `${data.usedRamMB} / ${data.totalRamMB}`;
@@ -745,11 +1136,9 @@
     });
 
     socket.on('bot-update', (bots) => {
-      // Yeni veya güncellenmiş botları işle
       const currentIds = new Set(state.bots.keys());
       const newIds = new Set(bots.map(b => b.id));
 
-      // Silinen botları kaldır
       for (const id of currentIds) {
         if (!newIds.has(id)) {
           state.bots.delete(id);
@@ -757,20 +1146,22 @@
         }
       }
 
-      // Yeni/güncel botları ekle
       for (const bot of bots) {
         const existing = state.bots.get(bot.id);
         state.bots.set(bot.id, bot);
         if (!state.consoles.has(bot.id)) {
           state.consoles.set(bot.id, []);
         }
-        // Anti-AFK durumu değişmişse UI güncelle
         if (existing && existing.antiAfkEnabled !== bot.antiAfkEnabled) {
           updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
         }
       }
 
-      renderBots();
+      updateServersFromBots();
+      renderServerBrowser();
+      if (state.currentServerKey) {
+        renderBotPanel();
+      }
     });
 
     socket.on('chat-message', ({ botId, type, text, timestamp }) => {
@@ -787,44 +1178,244 @@
       showToast(type, text);
     });
 
-    // ── Bot Ekleme ─────────────────────────────────────────────
+    function updateServersFromBots() {
+      state.servers.clear();
 
-    els.btnAddBot.addEventListener('click', () => {
-      const ip = els.serverIp.value.trim();
-      const port = els.serverPort.value.trim();
-      const name = els.botName.value.trim();
-      const version = els.botVersion.value;
-      const proxy = els.proxyString.value.trim();
+      for (const bot of state.bots.values()) {
+        const key = bot.serverKey;
+        if (!state.servers.has(key)) {
+          state.servers.set(key, {
+            serverKey: key,
+            serverIp: bot.serverIp,
+            serverPort: bot.serverPort,
+            version: bot.version,
+            hasProxy: bot.hasProxy,
+            proxy: bot.hasProxy ? '' : '',
+            bots: [],
+            icon: null,
+            motd: '',
+            onlinePlayers: 0,
+            maxPlayers: 0,
+            status: 'offline'
+          });
+        }
 
-      if (!ip) { showToast('error', 'Sunucu IP zorunludur.'); return; }
-      if (!name) { showToast('error', 'Bot adı zorunludur.'); return; }
+        const server = state.servers.get(key);
+        server.bots.push(bot);
 
-      socket.emit('add-bot', { ip, port, botName: name, version, proxy });
+        if (bot.status === 'online') server.status = 'online';
+        else if (bot.status === 'error' && server.status !== 'online') server.status = 'error';
+        else if (bot.status === 'connecting' && server.status === 'offline') server.status = 'connecting';
+      }
 
-      // Formu temizle (IP ve proxy hariç)
-      els.botName.value = '';
+      for (const server of state.servers.values()) {
+        server.onlineBotCount = server.bots.filter(b => b.status === 'online').length;
+        server.totalBotCount = server.bots.length;
+        fetchServerInfo(server);
+      }
+    }
+
+    async function fetchServerInfo(server) {
+      try {
+        const response = await fetch(`https://api.mcstatus.io/v2/status/java/${server.serverIp}:${server.serverPort}`);
+        const data = await response.json();
+
+        if (data.online) {
+          server.motd = data.motd?.clean?.[0] || data.motd?.raw?.[0] || '';
+          server.onlinePlayers = data.players?.online || 0;
+          server.maxPlayers = data.players?.max || 0;
+          server.version = data.version || server.version;
+          if (data.icon) {
+            server.icon = data.icon;
+          }
+          server.software = data.software || '';
+        }
+
+        renderServerBrowser();
+        if (state.currentServerKey === server.serverKey) {
+          updatePanelHeader(server);
+        }
+      } catch (err) {}
+    }
+
+    function showPage(pageName) {
+      if (pageName === 'browser') {
+        pages.browser.classList.remove('hidden');
+        pages.panel.classList.add('hidden');
+        state.currentServerKey = null;
+      } else if (pageName === 'panel') {
+        pages.browser.classList.add('hidden');
+        pages.panel.classList.remove('hidden');
+      }
+    }
+
+    els.btnBack.addEventListener('click', () => {
+      showPage('browser');
     });
 
-    // Enter ile ekleme
-    els.botName.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') els.btnAddBot.click();
-    });
+    function renderServerBrowser() {
+      const servers = Array.from(state.servers.values());
 
-    // ── Bot Kartı Render ───────────────────────────────────────
+      if (servers.length === 0) {
+        els.serverList.style.display = 'none';
+        els.serverEmpty.style.display = 'block';
+        return;
+      }
 
-    function renderBots() {
-      const bots = Array.from(state.bots.values());
+      els.serverList.style.display = 'flex';
+      els.serverEmpty.style.display = 'none';
+
+      for (const server of servers) {
+        let card = document.getElementById(`server-card-${server.serverKey.replace(/[:.]/g, '-')}`);
+
+        if (!card) {
+          card = createServerCard(server);
+          els.serverList.appendChild(card);
+        } else {
+          updateServerCard(card, server);
+        }
+      }
+
+      const cards = els.serverList.querySelectorAll('.server-card');
+      for (const card of cards) {
+        const key = card.dataset.serverKey;
+        if (!state.servers.has(key)) {
+          card.remove();
+        }
+      }
+    }
+
+    function createServerCard(server) {
+      const card = document.createElement('div');
+      card.className = `server-card has-${server.status}`;
+      card.id = `server-card-${server.serverKey.replace(/[:.]/g, '-')}`;
+      card.dataset.serverKey = server.serverKey;
+
+      const statusColor = {
+        online: 'var(--online)',
+        offline: 'var(--offline)',
+        error: 'var(--error)',
+        connecting: 'var(--connecting)'
+      }[server.status] || 'var(--offline)';
+
+      card.innerHTML = `
+        <div class="server-icon" id="server-icon-${server.serverKey.replace(/[:.]/g, '-')}">
+          ${server.icon ? `<img src="${server.icon}" alt="icon">` : '<span class="icon-placeholder">🖥️</span>'}
+        </div>
+        <div class="server-info">
+          <div class="server-name">
+            ${escapeHtml(server.serverIp)}
+            <span style="color:${statusColor};font-size:0.85rem;">●</span>
+          </div>
+          <div class="server-motd">${escapeHtml(server.motd || 'MOTD yükleniyor...')}</div>
+          <div class="server-meta">
+            <span class="version-badge">${server.version}</span>
+            ${server.hasProxy ? '<span class="proxy-badge">🧦 SOCKS5</span>' : ''}
+            <span>👤 ${server.onlinePlayers}/${server.maxPlayers}</span>
+            <span>🤖 ${server.onlineBotCount}/${server.totalBotCount} bot</span>
+          </div>
+        </div>
+        <div class="player-count">
+          <div class="count">${server.onlineBotCount}<span>/${server.totalBotCount}</span></div>
+          <div class="label">Aktif Bot</div>
+        </div>
+        <div class="server-actions">
+          <button class="btn-add-bot" data-action="add" data-server="${server.serverKey}">
+            <span>➕</span> Bot Ekle
+          </button>
+          ${server.totalBotCount > 0 ? `
+          <button class="btn-remove-all" data-action="remove-all" data-server="${server.serverKey}">
+            <span>🗑️</span>
+          </button>
+          ` : ''}
+        </div>
+      `;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.server-actions')) return;
+        openServerPanel(server.serverKey);
+      });
+
+      card.querySelector('[data-action="add"]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAddBotModal(server);
+      });
+
+      card.querySelector('[data-action="remove-all"]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`"${server.serverIp}" sunucusundaki tüm botları çıkarmak istiyor musun?`)) {
+          socket.emit('remove-server-bots', server.serverKey);
+        }
+      });
+
+      return card;
+    }
+
+    function updateServerCard(card, server) {
+      const iconEl = document.getElementById(`server-icon-${server.serverKey.replace(/[:.]/g, '-')}`);
+      if (iconEl && server.icon && !iconEl.querySelector('img')) {
+        iconEl.innerHTML = `<img src="${server.icon}" alt="icon">`;
+      }
+
+      card.className = `server-card has-${server.status}`;
+
+      const motdEl = card.querySelector('.server-motd');
+      if (motdEl && server.motd) motdEl.textContent = server.motd;
+
+      const metaEl = card.querySelector('.server-meta');
+      if (metaEl) {
+        metaEl.innerHTML = `
+          <span class="version-badge">${server.version}</span>
+          ${server.hasProxy ? '<span class="proxy-badge">🧦 SOCKS5</span>' : ''}
+          <span>👤 ${server.onlinePlayers}/${server.maxPlayers}</span>
+          <span>🤖 ${server.onlineBotCount}/${server.totalBotCount} bot</span>
+        `;
+      }
+
+      const countEl = card.querySelector('.player-count .count');
+      if (countEl) {
+        countEl.innerHTML = `${server.onlineBotCount}<span>/${server.totalBotCount}</span>`;
+      }
+    }
+
+    function openServerPanel(serverKey) {
+      state.currentServerKey = serverKey;
+      const server = state.servers.get(serverKey);
+      if (!server) return;
+
+      updatePanelHeader(server);
+      renderBotPanel();
+      showPage('panel');
+    }
+
+    function updatePanelHeader(server) {
+      els.panelServerName.textContent = server.serverIp;
+      els.panelServerIp.textContent = `${server.serverIp}:${server.serverPort}`;
+      els.panelVersion.textContent = server.version;
+      els.panelProxyBadge.style.display = server.hasProxy ? 'inline' : 'none';
+
+      if (server.icon) {
+        els.panelIcon.innerHTML = `<img src="${server.icon}" alt="icon">`;
+      } else {
+        els.panelIcon.innerHTML = '<span class="icon-placeholder">🖥️</span>';
+      }
+    }
+
+    function renderBotPanel() {
+      const server = state.servers.get(state.currentServerKey);
+      if (!server) return;
+
+      const bots = server.bots;
 
       if (bots.length === 0) {
         els.botsContainer.style.display = 'none';
-        els.emptyState.style.display = 'block';
+        els.panelEmpty.style.display = 'block';
         return;
       }
 
       els.botsContainer.style.display = 'grid';
-      els.emptyState.style.display = 'none';
+      els.panelEmpty.style.display = 'none';
 
-      // Mevcut kartları güncelle veya yeni ekle
       for (const bot of bots) {
         let card = document.getElementById(`card-${bot.id}`);
 
@@ -836,11 +1427,11 @@
         }
       }
 
-      // DOM'da fazla kalan kartları temizle
       const cards = els.botsContainer.querySelectorAll('.bot-card');
       for (const card of cards) {
         const botId = card.dataset.botId;
-        if (!state.bots.has(botId)) {
+        const bot = state.bots.get(botId);
+        if (!bot || bot.serverKey !== state.currentServerKey) {
           card.remove();
         }
       }
@@ -867,11 +1458,6 @@
             <div>
               <div class="bot-name">${escapeHtml(bot.name)}</div>
               <div class="bot-meta">
-                <span>${escapeHtml(bot.serverIp)}:${bot.serverPort}</span>
-                <span>•</span>
-                <span>${bot.version}</span>
-                ${bot.hasProxy ? '<span class="proxy-badge">🧦 SOCKS5</span>' : ''}
-                <span>•</span>
                 <span id="status-${bot.id}">${statusText}</span>
               </div>
             </div>
@@ -889,7 +1475,6 @@
         </div>
       `;
 
-      // Olay dinleyicileri
       card.querySelector('[data-action="remove"]').addEventListener('click', () => {
         socket.emit('remove-bot', bot.id);
       });
@@ -897,11 +1482,11 @@
       card.querySelector('[data-action="players"]').addEventListener('click', () => {
         state.currentPlayerListBot = bot.id;
         els.playerList.innerHTML = '<li class="player-item">Yükleniyor...</li>';
-        els.playerModal.classList.add('active');
+        els.modalPlayers.classList.add('active');
         socket.emit('request-player-list', bot.id);
       });
 
-      card.querySelector('[data-action="antiafk"]').addEventListener('click', (e) => {
+      card.querySelector('[data-action="antiafk"]').addEventListener('click', () => {
         const newState = !bot.antiAfkEnabled;
         socket.emit('toggle-antiafk', { botId: bot.id, enabled: newState });
       });
@@ -939,18 +1524,13 @@
       statusDot.className = `status-dot ${statusClass}`;
       if (statusText) statusText.textContent = statusLabel;
 
-      // Anti-AFK butonu güncelle
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
 
     function updateAntiAfkButton(botId, enabled) {
       const btn = document.getElementById(`afk-btn-${botId}`);
-      if (btn) {
-        btn.classList.toggle('active', enabled);
-      }
+      if (btn) btn.classList.toggle('active', enabled);
     }
-
-    // ── Konsol Mesajları ───────────────────────────────────────
 
     function addConsoleMessage(botId, type, text, timestamp) {
       const consoleEl = document.getElementById(`console-${botId}`);
@@ -961,17 +1541,103 @@
       line.innerHTML = `<span class="timestamp">${timestamp}</span>${escapeHtml(text)}`;
 
       consoleEl.appendChild(line);
-
-      // Auto-scroll en alta
       consoleEl.scrollTop = consoleEl.scrollHeight;
 
-      // Mesaj limiti (son 200)
       while (consoleEl.children.length > 200) {
         consoleEl.removeChild(consoleEl.firstChild);
       }
     }
 
-    // ── Oyuncu Listesi Modal ───────────────────────────────────
+    function openAddBotModal(server) {
+      els.modalServerIp.value = server.serverIp;
+      els.modalServerPort.value = server.serverPort;
+      els.modalBotVersion.value = server.version;
+      els.modalProxy.value = server.hasProxy ? (server.proxy || '') : '';
+      els.modalBotNames.value = '';
+      els.modalAddBot.classList.add('active');
+    }
+
+    els.btnPanelAddBot.addEventListener('click', () => {
+      const server = state.servers.get(state.currentServerKey);
+      if (server) openAddBotModal(server);
+    });
+
+    els.modalAddClose.addEventListener('click', () => {
+      els.modalAddBot.classList.remove('active');
+    });
+
+    els.modalAddBot.addEventListener('click', (e) => {
+      if (e.target === els.modalAddBot) els.modalAddBot.classList.remove('active');
+    });
+
+    els.btnModalAdd.addEventListener('click', () => {
+      const ip = els.modalServerIp.value.trim();
+      const port = els.modalServerPort.value.trim();
+      const version = els.modalBotVersion.value;
+      const proxy = els.modalProxy.value.trim();
+      const namesText = els.modalBotNames.value.trim();
+
+      if (!namesText) {
+        showToast('error', 'En az bir bot adı girin.');
+        return;
+      }
+
+      const botNames = namesText.split('\n').map(n => n.trim()).filter(n => n);
+
+      if (botNames.length === 0) {
+        showToast('error', 'Geçerli bot adı bulunamadı.');
+        return;
+      }
+
+      socket.emit('add-bots-batch', { serverIp: ip, port, version, proxy, botNames });
+      els.modalAddBot.classList.remove('active');
+      showToast('success', `${botNames.length} bot ekleniyor...`);
+    });
+
+    els.btnPanelBroadcast.addEventListener('click', () => {
+      els.modalBroadcast.classList.add('active');
+      els.broadcastMessage.value = '';
+      els.broadcastMessage.focus();
+    });
+
+    els.modalBroadcastClose.addEventListener('click', () => {
+      els.modalBroadcast.classList.remove('active');
+    });
+
+    els.modalBroadcast.addEventListener('click', (e) => {
+      if (e.target === els.modalBroadcast) els.modalBroadcast.classList.remove('active');
+    });
+
+    els.btnBroadcastSend.addEventListener('click', () => {
+      const msg = els.broadcastMessage.value.trim();
+      if (!msg) return;
+
+      socket.emit('broadcast-message', { serverKey: state.currentServerKey, message: msg });
+      els.modalBroadcast.classList.remove('active');
+    });
+
+    els.broadcastMessage.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') els.btnBroadcastSend.click();
+    });
+
+    els.btnPanelAntiAfk.addEventListener('click', () => {
+      state.antiAfkAllState = !state.antiAfkAllState;
+      els.btnPanelAntiAfk.classList.toggle('active', state.antiAfkAllState);
+      socket.emit('toggle-all-antiafk', { 
+        serverKey: state.currentServerKey, 
+        enabled: state.antiAfkAllState 
+      });
+    });
+
+    els.btnPanelRemoveAll.addEventListener('click', () => {
+      const server = state.servers.get(state.currentServerKey);
+      if (!server) return;
+
+      if (confirm(`"${server.serverIp}" sunucusundaki TÜM botları çıkarmak istiyor musun?`)) {
+        socket.emit('remove-server-bots', state.currentServerKey);
+        showPage('browser');
+      }
+    });
 
     function showPlayerList(players) {
       if (!players || players.length === 0) {
@@ -986,27 +1652,25 @@
 
         return `
           <li class="player-item">
-            <span>👤</span>
-            <span>${escapeHtml(p.username)}</span>
+            <span style="font-size:1.1rem">👤</span>
+            <span style="font-weight:600">${escapeHtml(p.username)}</span>
             <span class="ping ${pingClass}">${p.ping}ms</span>
           </li>
         `;
       }).join('');
     }
 
-    els.modalClose.addEventListener('click', () => {
-      els.playerModal.classList.remove('active');
+    els.modalPlayersClose.addEventListener('click', () => {
+      els.modalPlayers.classList.remove('active');
       state.currentPlayerListBot = null;
     });
 
-    els.playerModal.addEventListener('click', (e) => {
-      if (e.target === els.playerModal) {
-        els.playerModal.classList.remove('active');
+    els.modalPlayers.addEventListener('click', (e) => {
+      if (e.target === els.modalPlayers) {
+        els.modalPlayers.classList.remove('active');
         state.currentPlayerListBot = null;
       }
     });
-
-    // ── Toast Bildirimleri ─────────────────────────────────────
 
     function showToast(type, text) {
       const toast = document.createElement('div');
@@ -1016,12 +1680,10 @@
 
       setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
+        toast.style.transform = 'translateX(100%) scale(0.9)';
         setTimeout(() => toast.remove(), 300);
-      }, 4000);
+      }, 4500);
     }
-
-    // ── Yardımcı Fonksiyonlar ──────────────────────────────────
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -1029,8 +1691,7 @@
       return div.innerHTML;
     }
 
-    // ── Başlangıç ──────────────────────────────────────────────
-    renderBots();
+    renderServerBrowser();
   </script>
 
 </body>
