@@ -1182,6 +1182,7 @@
 
     function loadMessagesFromStorage(botId) {
       try {
+        if (!botId) return;
         const key = `${STORAGE_KEY}-${botId}`;
         const data = localStorage.getItem(key);
         if (!data) return;
@@ -1211,6 +1212,12 @@
     // ── Socket Olayları ────────────────────────────────────────
     socket.on('connect', () => {
       console.log('[Socket] Bağlandı');
+      // Bağlandığında tüm botların sohbet geçmişini yükle
+      setTimeout(() => {
+        for (const [botId] of state.bots) {
+          loadMessagesFromStorage(botId);
+        }
+      }, 1000);
     });
 
     socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
@@ -1455,7 +1462,9 @@
 
       // LocalStorage'dan geçmiş mesajları yükle
       if (server.bots && server.bots.length > 0) {
-        server.bots.forEach(b => loadMessagesFromStorage(b.id));
+        server.bots.forEach(b => {
+          if (b && b.id) loadMessagesFromStorage(b.id);
+        });
       }
 
       return card;
@@ -1536,6 +1545,10 @@
           els.botsContainer.appendChild(card);
         } else {
           updateBotCard(card, bot);
+        }
+        // Her bot için geçmişi yükle
+        if (bot && bot.id) {
+          loadMessagesFromStorage(bot.id);
         }
       }
 
@@ -1619,7 +1632,9 @@
       });
 
       // LocalStorage'dan geçmiş mesajları yükle
-      loadMessagesFromStorage(bot.id);
+      if (bot && bot.id) {
+        loadMessagesFromStorage(bot.id);
+      }
 
       return card;
     }
