@@ -1185,6 +1185,7 @@
     });
 
     socket.on('bot-update', (bots) => {
+      console.log('[Socket] bot-update received:', bots.length, 'bots');
       const currentIds = new Set(state.bots.keys());
       const newIds = new Set(bots.map(b => b.id));
 
@@ -1192,8 +1193,6 @@
         if (!newIds.has(id)) {
           state.bots.delete(id);
           state.consoles.delete(id);
-          // Storage'ı temizle (isteğe bağlı - yorum satırı yapabilirsin)
-          // clearStorageForBot(id);
         }
       }
 
@@ -1234,7 +1233,11 @@
       state.servers.clear();
 
       for (const bot of state.bots.values()) {
-        const key = bot.serverKey;
+        const key = bot.serverKey || `${bot.serverIp}:${bot.serverPort}`;
+        if (!key) {
+          console.warn('[Update] Bot serverKey yok:', bot);
+          continue;
+        }
         if (!state.servers.has(key)) {
           state.servers.set(key, {
             serverKey: key,
@@ -1370,6 +1373,9 @@
     function renderServerBrowser() {
       const servers = Array.from(state.servers.values());
 
+      // Debug: konsola yaz
+      console.log('[Render] Bots:', state.bots.size, 'Servers:', servers.length);
+
       if (servers.length === 0) {
         els.serverList.style.display = 'none';
         els.serverEmpty.style.display = 'block';
@@ -1402,8 +1408,9 @@
     function createServerCard(server) {
       const card = document.createElement('div');
       card.className = `server-card has-${server.status}`;
-      card.id = `server-card-${server.serverKey.replace(/[:.]/g, '-')}`;
-      card.dataset.serverKey = server.serverKey;
+      const safeKey = (server.serverKey || '').replace(/[^a-zA-Z0-9]/g, '-');
+      card.id = `server-card-${safeKey}`;
+      card.dataset.serverKey = server.serverKey || '';
 
       const statusColor = {
         online: 'var(--online)',
