@@ -1469,8 +1469,10 @@
         }
       });
 
-      // LocalStorage'dan geçmiş mesajları yükle
-      loadMessagesFromStorage(bot.id);
+      // LocalStorage'dan geçmiş mesajları yükle (ilk bot için)
+      if (server.bots && server.bots.length > 0) {
+        server.bots.forEach(b => loadMessagesFromStorage(b.id));
+      }
 
       return card;
     }
@@ -1633,8 +1635,10 @@
       // LocalStorage'dan geçmiş mesajları yükle
       loadMessagesFromStorage(bot.id);
 
-      // LocalStorage'dan geçmiş mesajları yükle
-      loadMessagesFromStorage(bot.id);
+      // LocalStorage'dan geçmiş mesajları yükle (ilk bot için)
+      if (server.bots && server.bots.length > 0) {
+        server.bots.forEach(b => loadMessagesFromStorage(b.id));
+      }
 
       return card;
     }
