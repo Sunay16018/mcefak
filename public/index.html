@@ -718,12 +718,12 @@
       user-select: none;
     }
 
-    .console-line.chat { color: var(--text-primary); }
-    .console-line.whisper { color: #d2a8ff; }
-    .console-line.system { color: var(--accent); }
-    .console-line.error { color: var(--error); }
-    .console-line.self { color: var(--success); font-style: italic; }
-    .console-line.info { color: var(--text-secondary); }
+    .console-line.chat { color: #e6edf3; font-weight: 500; }
+    .console-line.whisper { color: #d2a8ff; font-weight: 500; }
+    .console-line.system { color: #58a6ff; font-weight: 600; }
+    .console-line.error { color: #f85149; font-weight: 600; }
+    .console-line.self { color: #3fb950; font-style: italic; font-weight: 500; }
+    .console-line.info { color: #8b949e; }
 
     .bot-controls {
       padding: 10px 16px;
@@ -1167,7 +1167,15 @@
       playerList: document.getElementById('player-list')
     };
 
-    socket.on('connect', () => console.log('[Socket] Bağlandı'));
+    socket.on('connect', () => {
+      console.log('[Socket] Bağlandı');
+      // Bağlandığında mevcut botların geçmişini yükle
+      setTimeout(() => {
+        for (const botId of state.consoles.keys()) {
+          loadMessagesFromStorage(botId);
+        }
+      }, 500);
+    });
     socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
     socket.on('ram-usage', (data) => {
@@ -1184,6 +1192,8 @@
         if (!newIds.has(id)) {
           state.bots.delete(id);
           state.consoles.delete(id);
+          // Storage'ı temizle (isteğe bağlı - yorum satırı yapabilirsin)
+          // clearStorageForBot(id);
         }
       }
 
@@ -1207,6 +1217,7 @@
 
     socket.on('chat-message', ({ botId, type, text, timestamp }) => {
       addConsoleMessage(botId, type, text, timestamp);
+      saveMessageToStorage(botId, type, text, timestamp);
     });
 
     socket.on('player-list', ({ botId, players }) => {
@@ -1293,6 +1304,68 @@
     els.btnBack.addEventListener('click', () => {
       showPage('browser');
     });
+
+    // ── LocalStorage Sohbet Geçmişi ─────────────────────────────
+
+    const STORAGE_KEY = 'mc-afk-chat-history';
+    const STORAGE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 gün
+
+    function saveMessageToStorage(botId, type, text, timestamp) {
+      try {
+        const key = `${STORAGE_KEY}-${botId}`;
+        let messages = JSON.parse(localStorage.getItem(key) || '[]');
+        messages.push({ type, text, timestamp });
+        // Son 500 mesajı tut
+        if (messages.length > 500) messages = messages.slice(-500);
+        localStorage.setItem(key, JSON.stringify(messages));
+      } catch (e) {
+        console.error('[Storage] Kaydetme hatası:', e);
+      }
+    }
+
+    function loadMessagesFromStorage(botId) {
+      try {
+        const key = `${STORAGE_KEY}-${botId}`;
+        const data = localStorage.getItem(key);
+        if (!data) return;
+
+        const messages = JSON.parse(data);
+        const consoleEl = document.getElementById(`console-${botId}`);
+
+        // Konsol boşsa (sayfa yeni açıldıysa) mesajları yaz
+        if (consoleEl) {
+          // Önce temizle (varsa)
+          consoleEl.innerHTML = '';
+          messages.forEach(m => {
+            const line = document.createElement('div');
+            line.className = `console-line ${m.type}`;
+            line.innerHTML = `<span class="timestamp">${m.timestamp}</span>${escapeHtml(m.text)}`;
+            consoleEl.appendChild(line);
+          });
+          // En alta scroll
+          consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+      } catch (e) {
+        console.error('[Storage] Yükleme hatası:', e);
+      }
+    }
+
+    function clearStorageForBot(botId) {
+      try {
+        localStorage.removeItem(`${STORAGE_KEY}-${botId}`);
+      } catch (e) {}
+    }
+
+    function clearAllStorage() {
+      try {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(STORAGE_KEY)) keys.push(key);
+        }
+        keys.forEach(k => localStorage.removeItem(k));
+      } catch (e) {}
+    }
 
     function renderServerBrowser() {
       const servers = Array.from(state.servers.values());
@@ -1388,6 +1461,9 @@
           socket.emit('remove-server-bots', server.serverKey);
         }
       });
+
+      // LocalStorage'dan geçmiş mesajları yükle
+      loadMessagesFromStorage(bot.id);
 
       return card;
     }
@@ -1547,12 +1623,19 @@
         if (e.key === 'Enter') sendBtn.click();
       });
 
+      // LocalStorage'dan geçmiş mesajları yükle
+      loadMessagesFromStorage(bot.id);
+
+      // LocalStorage'dan geçmiş mesajları yükle
+      loadMessagesFromStorage(bot.id);
+
       return card;
     }
 
     function updateBotCard(card, bot) {
       const statusDot = card.querySelector('.status-dot');
       const statusText = card.querySelector(`#status-${bot.id}`);
+      const nameEl = card.querySelector('.bot-name');
 
       const statusClass = bot.status;
       const statusLabel = {
@@ -1564,6 +1647,7 @@
 
       statusDot.className = `status-dot ${statusClass}`;
       if (statusText) statusText.textContent = statusLabel;
+      if (nameEl) nameEl.textContent = bot.name;
 
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
@@ -1584,7 +1668,8 @@
       consoleEl.appendChild(line);
       consoleEl.scrollTop = consoleEl.scrollHeight;
 
-      while (consoleEl.children.length > 200) {
+      // Limit: son 500 mesaj
+      while (consoleEl.children.length > 500) {
         consoleEl.removeChild(consoleEl.firstChild);
       }
     }
