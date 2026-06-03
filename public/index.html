@@ -718,12 +718,12 @@
       user-select: none;
     }
 
-    .console-line.chat { color: #e6edf3; font-weight: 500; }
-    .console-line.whisper { color: #d2a8ff; font-weight: 500; }
-    .console-line.system { color: #58a6ff; font-weight: 600; }
-    .console-line.error { color: #f85149; font-weight: 600; }
-    .console-line.self { color: #3fb950; font-style: italic; font-weight: 500; }
-    .console-line.info { color: #8b949e; }
+    .console-line.chat { color: var(--text-primary); }
+    .console-line.whisper { color: #d2a8ff; }
+    .console-line.system { color: var(--accent); }
+    .console-line.error { color: var(--error); }
+    .console-line.self { color: var(--success); font-style: italic; }
+    .console-line.info { color: var(--text-secondary); }
 
     .bot-controls {
       padding: 10px 16px;
@@ -1553,7 +1553,6 @@
     function updateBotCard(card, bot) {
       const statusDot = card.querySelector('.status-dot');
       const statusText = card.querySelector(`#status-${bot.id}`);
-      const nameEl = card.querySelector('.bot-name');
 
       const statusClass = bot.status;
       const statusLabel = {
@@ -1565,7 +1564,6 @@
 
       statusDot.className = `status-dot ${statusClass}`;
       if (statusText) statusText.textContent = statusLabel;
-      if (nameEl) nameEl.textContent = bot.name;
 
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
@@ -1586,8 +1584,7 @@
       consoleEl.appendChild(line);
       consoleEl.scrollTop = consoleEl.scrollHeight;
 
-      // Limit: son 500 mesaj
-      while (consoleEl.children.length > 500) {
+      while (consoleEl.children.length > 200) {
         consoleEl.removeChild(consoleEl.firstChild);
       }
     }
