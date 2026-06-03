@@ -344,6 +344,37 @@
       border-color: var(--error);
     }
 
+    .btn-new-server {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(46, 160, 67, 0.25);
+    }
+
+    .btn-new-server:hover {
+      background: linear-gradient(135deg, #2ea043, #3fb950);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(46, 160, 67, 0.35);
+    }
+
+    .btn-new-server:active {
+      transform: translateY(0);
+    }
+
+    .empty-state .btn-new-server {
+      margin-top: 24px;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -853,39 +884,6 @@
       font-size: 0.9rem;
     }
 
-
-    /* Yeni Sunucu Ekle Butonu */
-    .btn-new-server {
-      background: linear-gradient(135deg, #238636, #2ea043);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 14px 28px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 16px rgba(46, 160, 67, 0.25);
-    }
-
-    .btn-new-server:hover {
-      background: linear-gradient(135deg, #2ea043, #3fb950);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(46, 160, 67, 0.35);
-    }
-
-    .btn-new-server:active {
-      transform: translateY(0);
-    }
-
-    .empty-state .btn-new-server {
-      margin-top: 24px;
-    }
-
     @media (max-width: 768px) {
       .topbar {
         flex-direction: column;
@@ -1039,12 +1037,12 @@
       <div class="modal-body">
         <div class="form-group">
           <label>Sunucu IP</label>
-          <input type="text" id="modal-server-ip" readonly>
+          <input type="text" id="modal-server-ip" placeholder="play.example.com">
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Port</label>
-            <input type="number" id="modal-server-port" readonly>
+            <input type="number" id="modal-server-port" value="25565">
           </div>
           <div class="form-group">
             <label>Sürüm</label>
@@ -1167,15 +1165,54 @@
       playerList: document.getElementById('player-list')
     };
 
+    // ── LocalStorage Sohbet Geçmişi ─────────────────────────────
+    const STORAGE_KEY = 'mc-afk-chat-history';
+
+    function saveMessageToStorage(botId, type, text, timestamp) {
+      try {
+        const key = `${STORAGE_KEY}-${botId}`;
+        let messages = JSON.parse(localStorage.getItem(key) || '[]');
+        messages.push({ type, text, timestamp });
+        if (messages.length > 500) messages = messages.slice(-500);
+        localStorage.setItem(key, JSON.stringify(messages));
+      } catch (e) {
+        console.error('[Storage] Kaydetme hatası:', e);
+      }
+    }
+
+    function loadMessagesFromStorage(botId) {
+      try {
+        const key = `${STORAGE_KEY}-${botId}`;
+        const data = localStorage.getItem(key);
+        if (!data) return;
+        const messages = JSON.parse(data);
+        const consoleEl = document.getElementById(`console-${botId}`);
+        if (consoleEl) {
+          consoleEl.innerHTML = '';
+          messages.forEach(m => {
+            const line = document.createElement('div');
+            line.className = `console-line ${m.type}`;
+            line.innerHTML = `<span class="timestamp">${m.timestamp}</span>${escapeHtml(m.text)}`;
+            consoleEl.appendChild(line);
+          });
+          consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+      } catch (e) {
+        console.error('[Storage] Yükleme hatası:', e);
+      }
+    }
+
+    function clearStorageForBot(botId) {
+      try {
+        localStorage.removeItem(`${STORAGE_KEY}-${botId}`);
+      } catch (e) {}
+    }
+
+    // ── Socket Olayları ────────────────────────────────────────
     socket.on('connect', () => {
       console.log('[Socket] Bağlandı');
-      // Bağlandığında mevcut botların geçmişini yükle
-      setTimeout(() => {
-        for (const botId of state.consoles.keys()) {
-          loadMessagesFromStorage(botId);
-        }
-      }, 500);
     });
+
     socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
     socket.on('ram-usage', (data) => {
@@ -1185,7 +1222,7 @@
     });
 
     socket.on('bot-update', (bots) => {
-      console.log('[Socket] bot-update received:', bots.length, 'bots');
+      console.log('[Socket] bot-update:', bots.length, 'bots');
       const currentIds = new Set(state.bots.keys());
       const newIds = new Set(bots.map(b => b.id));
 
@@ -1229,15 +1266,14 @@
       showToast(type, text);
     });
 
+    // ── Sunucu Verisi Yönetimi ─────────────────────────────────
     function updateServersFromBots() {
       state.servers.clear();
 
       for (const bot of state.bots.values()) {
         const key = bot.serverKey || `${bot.serverIp}:${bot.serverPort}`;
-        if (!key) {
-          console.warn('[Update] Bot serverKey yok:', bot);
-          continue;
-        }
+        if (!key) continue;
+
         if (!state.servers.has(key)) {
           state.servers.set(key, {
             serverKey: key,
@@ -1245,7 +1281,7 @@
             serverPort: bot.serverPort,
             version: bot.version,
             hasProxy: bot.hasProxy,
-            proxy: bot.hasProxy ? '' : '',
+            proxy: '',
             bots: [],
             icon: null,
             motd: '',
@@ -1279,20 +1315,20 @@
           server.motd = data.motd?.clean?.[0] || data.motd?.raw?.[0] || '';
           server.onlinePlayers = data.players?.online || 0;
           server.maxPlayers = data.players?.max || 0;
-          server.version = data.version || server.version;
-          if (data.icon) {
-            server.icon = data.icon;
-          }
-          server.software = data.software || '';
+          if (data.version) server.version = data.version.name_clean || data.version;
+          if (data.icon) server.icon = data.icon;
         }
 
         renderServerBrowser();
         if (state.currentServerKey === server.serverKey) {
           updatePanelHeader(server);
         }
-      } catch (err) {}
+      } catch (err) {
+        // API hatası sessizce atla
+      }
     }
 
+    // ── Sayfa Geçişleri ────────────────────────────────────────
     function showPage(pageName) {
       if (pageName === 'browser') {
         pages.browser.classList.remove('hidden');
@@ -1308,73 +1344,9 @@
       showPage('browser');
     });
 
-    // ── LocalStorage Sohbet Geçmişi ─────────────────────────────
-
-    const STORAGE_KEY = 'mc-afk-chat-history';
-    const STORAGE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 gün
-
-    function saveMessageToStorage(botId, type, text, timestamp) {
-      try {
-        const key = `${STORAGE_KEY}-${botId}`;
-        let messages = JSON.parse(localStorage.getItem(key) || '[]');
-        messages.push({ type, text, timestamp });
-        // Son 500 mesajı tut
-        if (messages.length > 500) messages = messages.slice(-500);
-        localStorage.setItem(key, JSON.stringify(messages));
-      } catch (e) {
-        console.error('[Storage] Kaydetme hatası:', e);
-      }
-    }
-
-    function loadMessagesFromStorage(botId) {
-      try {
-        const key = `${STORAGE_KEY}-${botId}`;
-        const data = localStorage.getItem(key);
-        if (!data) return;
-
-        const messages = JSON.parse(data);
-        const consoleEl = document.getElementById(`console-${botId}`);
-
-        // Konsol boşsa (sayfa yeni açıldıysa) mesajları yaz
-        if (consoleEl) {
-          // Önce temizle (varsa)
-          consoleEl.innerHTML = '';
-          messages.forEach(m => {
-            const line = document.createElement('div');
-            line.className = `console-line ${m.type}`;
-            line.innerHTML = `<span class="timestamp">${m.timestamp}</span>${escapeHtml(m.text)}`;
-            consoleEl.appendChild(line);
-          });
-          // En alta scroll
-          consoleEl.scrollTop = consoleEl.scrollHeight;
-        }
-      } catch (e) {
-        console.error('[Storage] Yükleme hatası:', e);
-      }
-    }
-
-    function clearStorageForBot(botId) {
-      try {
-        localStorage.removeItem(`${STORAGE_KEY}-${botId}`);
-      } catch (e) {}
-    }
-
-    function clearAllStorage() {
-      try {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith(STORAGE_KEY)) keys.push(key);
-        }
-        keys.forEach(k => localStorage.removeItem(k));
-      } catch (e) {}
-    }
-
+    // ── Server Browser Render ──────────────────────────────────
     function renderServerBrowser() {
       const servers = Array.from(state.servers.values());
-
-      // Debug: konsola yaz
-      console.log('[Render] Bots:', state.bots.size, 'Servers:', servers.length);
 
       if (servers.length === 0) {
         els.serverList.style.display = 'none';
@@ -1386,7 +1358,8 @@
       els.serverEmpty.style.display = 'none';
 
       for (const server of servers) {
-        let card = document.getElementById(`server-card-${server.serverKey.replace(/[:.]/g, '-')}`);
+        const safeId = 'server-card-' + server.serverKey.replace(/[^a-zA-Z0-9]/g, '-');
+        let card = document.getElementById(safeId);
 
         if (!card) {
           card = createServerCard(server);
@@ -1407,10 +1380,10 @@
 
     function createServerCard(server) {
       const card = document.createElement('div');
-      card.className = `server-card has-${server.status}`;
-      const safeKey = (server.serverKey || '').replace(/[^a-zA-Z0-9]/g, '-');
-      card.id = `server-card-${safeKey}`;
-      card.dataset.serverKey = server.serverKey || '';
+      const safeId = 'server-card-' + server.serverKey.replace(/[^a-zA-Z0-9]/g, '-');
+      card.className = 'server-card has-' + server.status;
+      card.id = safeId;
+      card.dataset.serverKey = server.serverKey;
 
       const statusColor = {
         online: 'var(--online)',
@@ -1419,10 +1392,12 @@
         connecting: 'var(--connecting)'
       }[server.status] || 'var(--offline)';
 
+      const iconHtml = server.icon 
+        ? '<img src="' + server.icon + '" alt="icon">' 
+        : '<span class="icon-placeholder">🖥️</span>';
+
       card.innerHTML = `
-        <div class="server-icon" id="server-icon-${server.serverKey.replace(/[:.]/g, '-')}">
-          ${server.icon ? `<img src="${server.icon}" alt="icon">` : '<span class="icon-placeholder">🖥️</span>'}
-        </div>
+        <div class="server-icon">${iconHtml}</div>
         <div class="server-info">
           <div class="server-name">
             ${escapeHtml(server.serverIp)}
@@ -1452,24 +1427,33 @@
         </div>
       `;
 
+      // Kartın kendisine tıklama (panel aç)
       card.addEventListener('click', (e) => {
         if (e.target.closest('.server-actions')) return;
         openServerPanel(server.serverKey);
       });
 
-      card.querySelector('[data-action="add"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openAddBotModal(server);
-      });
+      // Bot Ekle butonu
+      const addBtn = card.querySelector('[data-action="add"]');
+      if (addBtn) {
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openAddBotModal(server);
+        });
+      }
 
-      card.querySelector('[data-action="remove-all"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`"${server.serverIp}" sunucusundaki tüm botları çıkarmak istiyor musun?`)) {
-          socket.emit('remove-server-bots', server.serverKey);
-        }
-      });
+      // Tümünü Çıkar butonu
+      const removeBtn = card.querySelector('[data-action="remove-all"]');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm('"' + server.serverIp + '" sunucusundaki tüm botları çıkarmak istiyor musun?')) {
+            socket.emit('remove-server-bots', server.serverKey);
+          }
+        });
+      }
 
-      // LocalStorage'dan geçmiş mesajları yükle (ilk bot için)
+      // LocalStorage'dan geçmiş mesajları yükle
       if (server.bots && server.bots.length > 0) {
         server.bots.forEach(b => loadMessagesFromStorage(b.id));
       }
@@ -1478,12 +1462,12 @@
     }
 
     function updateServerCard(card, server) {
-      const iconEl = document.getElementById(`server-icon-${server.serverKey.replace(/[:.]/g, '-')}`);
-      if (iconEl && server.icon && !iconEl.querySelector('img')) {
-        iconEl.innerHTML = `<img src="${server.icon}" alt="icon">`;
+      const iconEl = card.querySelector('.server-icon');
+      if (iconEl && server.icon) {
+        iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon">';
       }
 
-      card.className = `server-card has-${server.status}`;
+      card.className = 'server-card has-' + server.status;
 
       const motdEl = card.querySelector('.server-motd');
       if (motdEl && server.motd) motdEl.textContent = server.motd;
@@ -1504,6 +1488,8 @@
       }
     }
 
+
+    // ── Bot Kontrol Paneli ─────────────────────────────────────
     function openServerPanel(serverKey) {
       state.currentServerKey = serverKey;
       const server = state.servers.get(serverKey);
@@ -1516,12 +1502,12 @@
 
     function updatePanelHeader(server) {
       els.panelServerName.textContent = server.serverIp;
-      els.panelServerIp.textContent = `${server.serverIp}:${server.serverPort}`;
+      els.panelServerIp.textContent = server.serverIp + ':' + server.serverPort;
       els.panelVersion.textContent = server.version;
       els.panelProxyBadge.style.display = server.hasProxy ? 'inline' : 'none';
 
       if (server.icon) {
-        els.panelIcon.innerHTML = `<img src="${server.icon}" alt="icon">`;
+        els.panelIcon.innerHTML = '<img src="' + server.icon + '" alt="icon">';
       } else {
         els.panelIcon.innerHTML = '<span class="icon-placeholder">🖥️</span>';
       }
@@ -1543,7 +1529,7 @@
       els.panelEmpty.style.display = 'none';
 
       for (const bot of bots) {
-        let card = document.getElementById(`card-${bot.id}`);
+        let card = document.getElementById('card-' + bot.id);
 
         if (!card) {
           card = createBotCard(bot);
@@ -1566,7 +1552,7 @@
     function createBotCard(bot) {
       const card = document.createElement('div');
       card.className = 'bot-card';
-      card.id = `card-${bot.id}`;
+      card.id = 'card-' + bot.id;
       card.dataset.botId = bot.id;
 
       const statusClass = bot.status;
@@ -1635,17 +1621,12 @@
       // LocalStorage'dan geçmiş mesajları yükle
       loadMessagesFromStorage(bot.id);
 
-      // LocalStorage'dan geçmiş mesajları yükle (ilk bot için)
-      if (server.bots && server.bots.length > 0) {
-        server.bots.forEach(b => loadMessagesFromStorage(b.id));
-      }
-
       return card;
     }
 
     function updateBotCard(card, bot) {
       const statusDot = card.querySelector('.status-dot');
-      const statusText = card.querySelector(`#status-${bot.id}`);
+      const statusText = card.querySelector('#status-' + bot.id);
       const nameEl = card.querySelector('.bot-name');
 
       const statusClass = bot.status;
@@ -1656,7 +1637,7 @@
         connecting: 'Bağlanıyor...'
       }[bot.status] || bot.status;
 
-      statusDot.className = `status-dot ${statusClass}`;
+      statusDot.className = 'status-dot ' + statusClass;
       if (statusText) statusText.textContent = statusLabel;
       if (nameEl) nameEl.textContent = bot.name;
 
@@ -1664,27 +1645,27 @@
     }
 
     function updateAntiAfkButton(botId, enabled) {
-      const btn = document.getElementById(`afk-btn-${botId}`);
+      const btn = document.getElementById('afk-btn-' + botId);
       if (btn) btn.classList.toggle('active', enabled);
     }
 
     function addConsoleMessage(botId, type, text, timestamp) {
-      const consoleEl = document.getElementById(`console-${botId}`);
+      const consoleEl = document.getElementById('console-' + botId);
       if (!consoleEl) return;
 
       const line = document.createElement('div');
-      line.className = `console-line ${type}`;
-      line.innerHTML = `<span class="timestamp">${timestamp}</span>${escapeHtml(text)}`;
+      line.className = 'console-line ' + type;
+      line.innerHTML = '<span class="timestamp">' + timestamp + '</span>' + escapeHtml(text);
 
       consoleEl.appendChild(line);
       consoleEl.scrollTop = consoleEl.scrollHeight;
 
-      // Limit: son 500 mesaj
       while (consoleEl.children.length > 500) {
         consoleEl.removeChild(consoleEl.firstChild);
       }
     }
 
+    // ── Modal: Bot Ekle ────────────────────────────────────────
     function openAddBotModal(server) {
       document.getElementById('modal-title').textContent = 'Bot Ekle';
       els.modalServerIp.value = server.serverIp;
@@ -1710,6 +1691,9 @@
       setTimeout(() => els.modalServerIp.focus(), 100);
     }
 
+    document.getElementById('btn-new-server').addEventListener('click', openAddServerModal);
+    document.getElementById('btn-new-server-empty').addEventListener('click', openAddServerModal);
+
     els.btnPanelAddBot.addEventListener('click', () => {
       const server = state.servers.get(state.currentServerKey);
       if (server) openAddBotModal(server);
@@ -1730,6 +1714,11 @@
       const proxy = els.modalProxy.value.trim();
       const namesText = els.modalBotNames.value.trim();
 
+      if (!ip) {
+        showToast('error', 'Sunucu IP girin.');
+        return;
+      }
+
       if (!namesText) {
         showToast('error', 'En az bir bot adı girin.');
         return;
@@ -1744,9 +1733,10 @@
 
       socket.emit('add-bots-batch', { serverIp: ip, port, version, proxy, botNames });
       els.modalAddBot.classList.remove('active');
-      showToast('success', `${botNames.length} bot ekleniyor...`);
+      showToast('success', botNames.length + ' bot ekleniyor...');
     });
 
+    // ── Modal: Toplu Mesaj ───────────────────────────────────
     els.btnPanelBroadcast.addEventListener('click', () => {
       els.modalBroadcast.classList.add('active');
       els.broadcastMessage.value = '';
@@ -1773,6 +1763,7 @@
       if (e.key === 'Enter') els.btnBroadcastSend.click();
     });
 
+    // ── Panel: Tüm Anti-AFK ──────────────────────────────────
     els.btnPanelAntiAfk.addEventListener('click', () => {
       state.antiAfkAllState = !state.antiAfkAllState;
       els.btnPanelAntiAfk.classList.toggle('active', state.antiAfkAllState);
@@ -1782,16 +1773,18 @@
       });
     });
 
+    // ── Panel: Tümünü Çıkar ────────────────────────────────────
     els.btnPanelRemoveAll.addEventListener('click', () => {
       const server = state.servers.get(state.currentServerKey);
       if (!server) return;
 
-      if (confirm(`"${server.serverIp}" sunucusundaki TÜM botları çıkarmak istiyor musun?`)) {
+      if (confirm('"' + server.serverIp + '" sunucusundaki TÜM botları çıkarmak istiyor musun?')) {
         socket.emit('remove-server-bots', state.currentServerKey);
         showPage('browser');
       }
     });
 
+    // ── Modal: Oyuncu Listesi ──────────────────────────────────
     function showPlayerList(players) {
       if (!players || players.length === 0) {
         els.playerList.innerHTML = '<li class="player-item">Çevrimiçi oyuncu yok.</li>';
@@ -1803,13 +1796,11 @@
         if (p.ping > 100) pingClass = 'medium';
         if (p.ping > 300) pingClass = 'bad';
 
-        return `
-          <li class="player-item">
-            <span style="font-size:1.1rem">👤</span>
-            <span style="font-weight:600">${escapeHtml(p.username)}</span>
-            <span class="ping ${pingClass}">${p.ping}ms</span>
-          </li>
-        `;
+        return '<li class="player-item">' +
+          '<span style="font-size:1.1rem">👤</span>' +
+          '<span style="font-weight:600">' + escapeHtml(p.username) + '</span>' +
+          '<span class="ping ' + pingClass + '">' + p.ping + 'ms</span>' +
+          '</li>';
       }).join('');
     }
 
@@ -1825,9 +1816,10 @@
       }
     });
 
+    // ── Toast ──────────────────────────────────────────────────
     function showToast(type, text) {
       const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
+      toast.className = 'toast ' + type;
       toast.textContent = text;
       els.toastContainer.appendChild(toast);
 
@@ -1838,34 +1830,14 @@
       }, 4500);
     }
 
+    // ── Yardımcı ───────────────────────────────────────────────
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
 
-    // Yeni Sunucu Ekle butonları
-    document.getElementById('btn-new-server').addEventListener('click', () => {
-      openAddServerModal();
-    });
-    document.getElementById('btn-new-server-empty').addEventListener('click', () => {
-      openAddServerModal();
-    });
-
-    function openAddServerModal() {
-      // Modal'ı boş sunucu bilgileriyle aç
-      els.modalServerIp.value = '';
-      els.modalServerIp.readOnly = false;
-      els.modalServerPort.value = '25565';
-      els.modalServerPort.readOnly = false;
-      els.modalBotVersion.value = '1.20.1';
-      els.modalProxy.value = '';
-      els.modalBotNames.value = '';
-      els.modalAddBot.classList.add('active');
-      // IP input'a focus
-      setTimeout(() => els.modalServerIp.focus(), 100);
-    }
-
+    // ── Başlangıç ──────────────────────────────────────────────
     renderServerBrowser();
   </script>
 
