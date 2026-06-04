@@ -1252,9 +1252,9 @@
         <span class="label">/</span>
         <span class="value" id="bot-limit">-</span>
       </div>
-      <div id="offline-badge" style="display:none; background: var(--warning); color: #000; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700;">
-        ⚠️ Çevrimdışı Mod
-      </div>
+    </div>
+    <div id="offline-badge" style="display:none; background: var(--warning); color: #000; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; margin-left: auto;">
+      ⚠️ Çevrimdışı Mod
     </div>
   </header>
 
@@ -1618,8 +1618,8 @@
       }
     }
 
-    // ── Socket Olayları ────────────────────────────────────────
 
+    // ── Socket Olayları ────────────────────────────────────────
     if (!isOfflineMode && socket && typeof socket.on === 'function') {
       socket.on('connect', () => {
         console.log('[Socket] Bağlandı');
