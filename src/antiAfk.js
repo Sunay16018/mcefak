@@ -1,5 +1,5 @@
 /**
- * Anti-AFK Modülü - Minecraft AFK Client v2.0
+ * Anti-AFK Modülü - Minecraft AFK Client v3.0
  * 
  * Botun AFK kick'inden kaçınması için:
  * - Rastgele kafa çevirme (2-5 sn arası)

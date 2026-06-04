@@ -1,8 +1,11 @@
 /**
- * Bot Yöneticisi v2.0 - Minecraft AFK Client
+ * Bot Yöneticisi v3.0 - Minecraft AFK Client
  * 
  * Yeni özellikler:
- * - Sunucu bazlı bot gruplama (serverKey = ip:port)
+ * - Bot koordinat, can, açlık, XP takibi
+ * - WASD hareket kontrolü (forward, back, left, right, jump, sneak, sit)
+ * - Bot başına özel script çalıştırma (sandboxed VM)
+ * - Sunucu bazlı bot gruplama
  * - Toplu bot ekleme/çıkarma
  * - Toplu Anti-AFK toggle
  * - Toplu mesaj gönderme
@@ -13,6 +16,7 @@
 const mineflayer = require('mineflayer');
 const { SocksClient } = require('socks');
 const os = require('os');
+const vm = require('vm');
 
 const AntiAfk = require('./antiAfk');
 
@@ -109,6 +113,54 @@ class BotManager {
       });
     }
     return bots;
+  }
+
+  /**
+   * Bot istatistiklerini döndürür (koordinat, can, açlık, XP)
+   */
+  getAllBotsWithStats() {
+    const bots = [];
+    for (const [id, data] of this.bots) {
+      const stats = this._getBotStats(data);
+      bots.push({
+        id,
+        name: data.name,
+        status: data.status,
+        serverIp: data.serverIp,
+        serverPort: data.serverPort,
+        serverKey: data.serverKey,
+        version: data.version,
+        hasProxy: data.hasProxy,
+        antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
+        playerCount: data.players ? data.players.length : 0,
+        ...stats
+      });
+    }
+    return bots;
+  }
+
+  _getBotStats(botData) {
+    const bot = botData.instance;
+    if (!bot || !bot.entity || botData.status !== 'online') {
+      return {
+        x: null, y: null, z: null,
+        health: null, maxHealth: null,
+        food: null, foodSaturation: null,
+        xp: null, level: null
+      };
+    }
+
+    return {
+      x: Math.round(bot.entity.position.x * 10) / 10,
+      y: Math.round(bot.entity.position.y * 10) / 10,
+      z: Math.round(bot.entity.position.z * 10) / 10,
+      health: Math.round(bot.health * 10) / 10,
+      maxHealth: bot.maxHealth || 20,
+      food: bot.food || 0,
+      foodSaturation: Math.round((bot.foodSaturation || 0) * 10) / 10,
+      xp: Math.round((bot.experience ? bot.experience.points : 0)),
+      level: bot.experience ? bot.experience.level : 0
+    };
   }
 
   /**
@@ -273,7 +325,6 @@ class BotManager {
       });
 
       bot.on('message', (jsonMsg, position) => {
-        // Sadece chat ve system mesajlarını yakala (game_info = action bar)
         if (position === 'game_info') return;
 
         const text = extractChatText(jsonMsg);
@@ -399,6 +450,139 @@ class BotManager {
     }
 
     return { success: true, message: `${sent} bot'a mesaj gönderildi.${failed > 0 ? ` (${failed} başarısız)` : ''}` };
+  }
+
+  // ── Bot Hareket Kontrolü ────────────────────────────────────
+
+  handleBotMove(botId, action, state) {
+    const botData = this.bots.get(botId);
+    if (!botData) {
+      return { success: false, message: 'Bot bulunamadı.' };
+    }
+    if (!botData.instance || botData.status !== 'online') {
+      return { success: false, message: 'Bot çevrimdışı.' };
+    }
+
+    const bot = botData.instance;
+
+    try {
+      switch (action) {
+        case 'forward':
+        case 'back':
+        case 'left':
+        case 'right':
+          bot.setControlState(action, state);
+          break;
+        case 'jump':
+          bot.setControlState('jump', state);
+          break;
+        case 'sneak':
+          bot.setControlState('sneak', state);
+          break;
+        case 'sprint':
+          bot.setControlState('sprint', state);
+          break;
+        case 'look':
+          if (state && typeof state.yaw === 'number' && typeof state.pitch === 'number') {
+            bot.look(state.yaw, state.pitch, true);
+          }
+          break;
+        case 'dig':
+          if (state && typeof state === 'object' && state.x !== undefined) {
+            const block = bot.blockAt(state);
+            if (block) bot.dig(block);
+          }
+          break;
+        case 'place':
+          if (state && typeof state === 'object' && state.x !== undefined) {
+            const refBlock = bot.blockAt(state);
+            if (refBlock) {
+              const vec = new (require('vec3'))(0, 1, 0);
+              bot.placeBlock(refBlock, vec);
+            }
+          }
+          break;
+        case 'useItem':
+          bot.activateItem();
+          break;
+        case 'swing':
+          bot.swingArm('right');
+          break;
+        case 'tp':
+          if (state && typeof state === 'object' && state.x !== undefined) {
+            bot.chat(`/tp ${bot.username} ${state.x} ${state.y} ${state.z}`);
+          }
+          break;
+        default:
+          return { success: false, message: `Bilinmeyen hareket: ${action}` };
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: `Hareket hatası: ${err.message}` };
+    }
+  }
+
+  // ── Bot Script Çalıştırma ───────────────────────────────────
+
+  runBotScript(botId, script) {
+    const botData = this.bots.get(botId);
+    if (!botData) {
+      return { success: false, message: 'Bot bulunamadı.' };
+    }
+    if (!botData.instance || botData.status !== 'online') {
+      return { success: false, message: 'Bot çevrimdışı.' };
+    }
+
+    const bot = botData.instance;
+
+    try {
+      const sandbox = {
+        bot,
+        console: {
+          log: (...args) => {
+            const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+            this.emitChatMessage(botId, 'system', `[Script] ${text}`);
+          },
+          error: (...args) => {
+            const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+            this.emitChatMessage(botId, 'error', `[Script Error] ${text}`);
+          }
+        },
+        setTimeout,
+        setInterval,
+        clearTimeout,
+        clearInterval,
+        Math,
+        Date,
+        JSON,
+        String,
+        Number,
+        Array,
+        Object,
+        Promise,
+        require: (mod) => {
+          const allowed = ['vec3'];
+          if (allowed.includes(mod)) return require(mod);
+          throw new Error(`Modül '${mod}' izin verilmiyor.`);
+        }
+      };
+
+      const context = vm.createContext(sandbox);
+      const result = vm.runInContext(script, context, {
+        timeout: 5000,
+        displayErrors: true
+      });
+
+      let output = '';
+      if (result !== undefined) {
+        output = typeof result === 'object' ? JSON.stringify(result) : String(result);
+      }
+
+      return { success: true, message: 'Script çalıştırıldı.', output };
+    } catch (err) {
+      return { success: false, message: `Script hatası: ${err.message}` };
+    }
   }
 
   // ── Anti-AFK ────────────────────────────────────────────────
