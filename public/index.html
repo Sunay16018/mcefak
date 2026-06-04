@@ -1618,6 +1618,50 @@
       }
     }
 
+    // ── Socket Olayları ────────────────────────────────────────
+
+    // ── Çevrimdışı Mod Yardımcıları ───────────────────────────
+    function addBotsOffline(serverIp, port, version, proxy, botNames) {
+      const serverKey = `${serverIp}:${port}`;
+      const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      botNames.forEach((name, idx) => {
+        const botId = 'offline-bot-' + Date.now() + '-' + idx;
+        const bot = {
+          id: botId,
+          name: name,
+          serverIp: serverIp,
+          serverPort: port,
+          serverKey: serverKey,
+          version: version,
+          hasProxy: !!proxy,
+          proxy: proxy || '',
+          status: 'online',
+          antiAfkEnabled: false,
+          x: 0, y: 64, z: 0,
+          health: 20, maxHealth: 20,
+          food: 20, foodSaturation: 0,
+          xp: 0, level: 0
+        };
+        state.bots.set(botId, bot);
+        state.consoles.set(botId, []);
+
+        // Demo mesaj ekle
+        setTimeout(() => {
+          addConsoleMessage(botId, 'system', `${name} sunucuya bağlandı (${serverIp}:${port})`, now);
+          addConsoleMessage(botId, 'info', `Sürüm: ${version} | Proxy: ${proxy || 'Yok'}`, now);
+        }, 300 + idx * 200);
+      });
+
+      updateServersFromBots();
+      renderServerBrowser();
+      if (state.currentServerKey === serverKey) {
+        renderBotPanel();
+      } else if (!state.currentServerKey) {
+        // Otomatik olarak sunucu panelini aç
+        setTimeout(() => openServerPanel(serverKey), 500);
+      }
+    }
 
     // ── Socket Olayları ────────────────────────────────────────
     if (!isOfflineMode && socket && typeof socket.on === 'function') {
