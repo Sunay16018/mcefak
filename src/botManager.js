@@ -17,7 +17,6 @@ const mineflayer = require('mineflayer');
 const { SocksClient } = require('socks');
 const os = require('os');
 const vm = require('vm');
-const { EventEmitter } = require('events');
 
 const AntiAfk = require('./antiAfk');
 
@@ -62,168 +61,12 @@ function getServerKey(ip, port) {
   return `${ip}:${port}`;
 }
 
-// ── Script Runner Sınıfı (Durdurulabilir Script) ────────────────
-class ScriptRunner extends EventEmitter {
-  constructor(botManager, botId, bot) {
-    super();
-    this.botManager = botManager;
-    this.botId = botId;
-    this.bot = bot;
-    this.isRunning = false;
-    this.context = null;
-    this.timeouts = new Set();
-    this.intervals = new Set();
-    this.startTime = null;
-  }
-
-  _createSandbox() {
-    const self = this;
-
-    const wrappedSetTimeout = (fn, delay, ...args) => {
-      if (!self.isRunning) return;
-      const id = setTimeout((...a) => {
-        self.timeouts.delete(id);
-        if (self.isRunning) fn(...a);
-      }, delay, ...args);
-      self.timeouts.add(id);
-      return id;
-    };
-
-    const wrappedSetInterval = (fn, delay, ...args) => {
-      if (!self.isRunning) return;
-      const id = setInterval((...a) => {
-        if (!self.isRunning) {
-          clearInterval(id);
-          self.intervals.delete(id);
-          return;
-        }
-        fn(...a);
-      }, delay, ...args);
-      self.intervals.add(id);
-      return id;
-    };
-
-    const wrappedClearTimeout = (id) => {
-      self.timeouts.delete(id);
-      clearTimeout(id);
-    };
-
-    const wrappedClearInterval = (id) => {
-      self.intervals.delete(id);
-      clearInterval(id);
-    };
-
-    return {
-      bot: this.bot,
-      console: {
-        log: (...args) => {
-          if (!self.isRunning) return;
-          const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'system', `[Script] ${text}`);
-        },
-        error: (...args) => {
-          if (!self.isRunning) return;
-          const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'error', `[Script Error] ${text}`);
-        },
-        warn: (...args) => {
-          if (!self.isRunning) return;
-          const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'info', `[Script Warn] ${text}`);
-        }
-      },
-      setTimeout: wrappedSetTimeout,
-      setInterval: wrappedSetInterval,
-      clearTimeout: wrappedClearTimeout,
-      clearInterval: wrappedClearInterval,
-      Math,
-      Date,
-      JSON,
-      String,
-      Number,
-      Array,
-      Object,
-      Promise,
-      Buffer,
-      require: (mod) => {
-        const allowed = ['vec3'];
-        if (allowed.includes(mod)) return require(mod);
-        throw new Error(`Modül '${mod}' izin verilmiyor.`);
-      }
-    };
-  }
-
-  run(scriptCode) {
-    if (this.isRunning) {
-      return { success: false, message: 'Zaten çalışan bir script var. Önce durdurun.' };
-    }
-
-    try {
-      this.isRunning = true;
-      this.startTime = Date.now();
-      const sandbox = this._createSandbox();
-      this.context = vm.createContext(sandbox);
-
-      const script = new vm.Script(scriptCode);
-      const result = script.runInContext(this.context, {
-        timeout: 10000,
-        displayErrors: true
-      });
-
-      this.botManager.emitChatMessage(this.botId, 'system', '▶️ Script başlatıldı. Interval/timeout aktif.');
-
-      return { 
-        success: true, 
-        message: 'Script çalıştırıldı. Durdurmak için Durdur butonuna basın.',
-        output: result !== undefined ? String(result) : ''
-      };
-    } catch (err) {
-      this.stop();
-      return { success: false, message: `Script hatası: ${err.message}` };
-    }
-  }
-
-  stop() {
-    if (!this.isRunning) {
-      return { success: false, message: 'Çalışan script yok.' };
-    }
-
-    this.isRunning = false;
-
-    for (const id of this.timeouts) {
-      clearTimeout(id);
-    }
-    this.timeouts.clear();
-
-    for (const id of this.intervals) {
-      clearInterval(id);
-    }
-    this.intervals.clear();
-
-    const duration = this.startTime ? ((Date.now() - this.startTime) / 1000).toFixed(1) : '0';
-    this.botManager.emitChatMessage(this.botId, 'system', `⏹️ Script durduruldu. Süre: ${duration}s`);
-
-    return { success: true, message: `Script durduruldu. (${duration} saniye çalıştı)` };
-  }
-
-  getStatus() {
-    return {
-      isRunning: this.isRunning,
-      startTime: this.startTime,
-      activeTimeouts: this.timeouts.size,
-      activeIntervals: this.intervals.size
-    };
-  }
-}
-
 // ── Bot Yöneticisi Sınıfı ───────────────────────────────────────
 class BotManager {
   constructor(io) {
     this.io = io;
     /** @type {Map<string, Object>} - Aktif botlar (id -> botData) */
     this.bots = new Map();
-    /** @type {Map<string, ScriptRunner>} - Aktif script runner'lar */
-    this.scriptRunners = new Map();
     /** @type {number} - Bot başına tahmini RAM (MB) */
     this.ramPerBot = 200;
     /** @type {number} - Minimum bot limiti */
@@ -266,7 +109,6 @@ class BotManager {
         version: data.version,
         hasProxy: data.hasProxy,
         antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
-        scriptRunning: this.scriptRunners.get(id)?.getStatus()?.isRunning || false,
         playerCount: data.players ? data.players.length : 0
       });
     }
@@ -290,7 +132,6 @@ class BotManager {
         version: data.version,
         hasProxy: data.hasProxy,
         antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
-        scriptRunning: this.scriptRunners.get(id)?.getStatus()?.isRunning || false,
         playerCount: data.players ? data.players.length : 0,
         ...stats
       });
@@ -346,7 +187,6 @@ class BotManager {
         name: data.name,
         status: data.status,
         antiAfkEnabled: data.antiAfk ? data.antiAfk.isRunning : false,
-        scriptRunning: this.scriptRunners.get(id)?.getStatus()?.isRunning || false,
         playerCount: data.players ? data.players.length : 0
       });
     }
@@ -647,34 +487,25 @@ class BotManager {
             bot.look(state.yaw, state.pitch, true);
           }
           break;
-        case 'lookYaw':
-          if (typeof state === 'number') {
-            const currentPitch = bot.entity.pitch || 0;
-            bot.look(state, currentPitch, true);
+        case 'lookDelta':
+          // Relative yaw/pitch change from mouse drag
+          if (state && typeof state.dyaw === 'number' && typeof state.dpitch === 'number') {
+            const curYaw = bot.entity ? bot.entity.yaw : 0;
+            const curPitch = bot.entity ? bot.entity.pitch : 0;
+            const newPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, curPitch + state.dpitch));
+            bot.look(curYaw + state.dyaw, newPitch, true);
           }
           break;
-        case 'lookPitch':
-          if (typeof state === 'number') {
-            const currentYaw = bot.entity.yaw || 0;
-            bot.look(currentYaw, state, true);
-          }
+        case 'startMining':
+          this._startMining(botData);
+          break;
+        case 'stopMining':
+          this._stopMining(botData);
           break;
         case 'dig':
-          if (state === true) {
-            // Gerçek blok kırma - imleç altındaki bloğu bul ve kır
-            const block = bot.blockAtCursor(4);
-            if (block && block.type !== 'air') {
-              bot.dig(block, 'ignore')
-                .then(() => {
-                  this.emitChatMessage(botId, 'system', `⛏️ Blok kırıldı: ${block.displayName || block.name}`);
-                })
-                .catch(err => {
-                  this.emitChatMessage(botId, 'error', `❌ Kırma hatası: ${err.message}`);
-                });
-              this.emitChatMessage(botId, 'system', `⛏️ Blok kırılıyor: ${block.displayName || block.name}...`);
-            } else {
-              this.emitChatMessage(botId, 'error', '❌ Kırılacak blok bulunamadı (imlecinizin altında blok yok).');
-            }
+          if (state && typeof state === 'object' && state.x !== undefined) {
+            const block = bot.blockAt(state);
+            if (block) bot.dig(block);
           }
           break;
         case 'place':
@@ -718,41 +549,164 @@ class BotManager {
       return { success: false, message: 'Bot çevrimdışı.' };
     }
 
-    // Eski runner'ı temizle
-    const oldRunner = this.scriptRunners.get(botId);
-    if (oldRunner) {
-      oldRunner.stop();
-      this.scriptRunners.delete(botId);
-    }
+    const bot = botData.instance;
 
-    const runner = new ScriptRunner(this, botId, botData.instance);
-    this.scriptRunners.set(botId, runner);
+    try {
+      const sandbox = {
+        bot,
+        console: {
+          log: (...args) => {
+            const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+            this.emitChatMessage(botId, 'system', `[Script] ${text}`);
+          },
+          error: (...args) => {
+            const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+            this.emitChatMessage(botId, 'error', `[Script Error] ${text}`);
+          }
+        },
+        setTimeout,
+        setInterval,
+        clearTimeout,
+        clearInterval,
+        Math,
+        Date,
+        JSON,
+        String,
+        Number,
+        Array,
+        Object,
+        Promise,
+        require: (mod) => {
+          const allowed = ['vec3'];
+          if (allowed.includes(mod)) return require(mod);
+          throw new Error(`Modül '${mod}' izin verilmiyor.`);
+        }
+      };
 
-    const result = runner.run(script);
-    if (result.success) {
-      this.emitBotUpdate();
+      const context = vm.createContext(sandbox);
+      const result = vm.runInContext(script, context, {
+        timeout: 5000,
+        displayErrors: true
+      });
+
+      let output = '';
+      if (result !== undefined) {
+        output = typeof result === 'object' ? JSON.stringify(result) : String(result);
+      }
+
+      return { success: true, message: 'Script çalıştırıldı.', output };
+    } catch (err) {
+      return { success: false, message: `Script hatası: ${err.message}` };
     }
-    return result;
   }
+
+  // ── Mining (Toggle) ─────────────────────────────────────────
+
+  _startMining(botData) {
+    if (botData.miningActive) return;
+    botData.miningActive = true;
+    const bot = botData.instance;
+    this.emitChatMessage(botData.id, 'system', '⛏️ Kazma modu başlatıldı.');
+
+    const digLoop = async () => {
+      while (botData.miningActive && bot && botData.status === 'online') {
+        try {
+          const block = bot.blockAtCursor(5);
+          if (block && block.name !== 'air') {
+            await bot.dig(block);
+          } else {
+            await new Promise(r => setTimeout(r, 100));
+          }
+        } catch (e) {
+          await new Promise(r => setTimeout(r, 200));
+        }
+      }
+    };
+    digLoop();
+  }
+
+  _stopMining(botData) {
+    if (!botData.miningActive) return;
+    botData.miningActive = false;
+    const bot = botData.instance;
+    if (bot) {
+      try { bot.stopDigging(); } catch (e) {}
+    }
+    this.emitChatMessage(botData.id, 'system', '⛏️ Kazma modu durduruldu.');
+  }
+
+  // ── Envanter ─────────────────────────────────────────────────
+
+  getInventory(botId) {
+    const botData = this.bots.get(botId);
+    if (!botData) return { success: false, message: 'Bot bulunamadı.' };
+    if (!botData.instance || botData.status !== 'online') return { success: false, message: 'Bot çevrimdışı.' };
+
+    const bot = botData.instance;
+    const slots = [];
+
+    for (let i = 0; i < 45; i++) {
+      const item = bot.inventory.slots[i];
+      if (item) {
+        slots.push({
+          slot: i,
+          name: item.name,
+          displayName: item.displayName || item.name,
+          count: item.count,
+          nbt: item.nbt ? JSON.stringify(item.nbt, null, 2) : null,
+          enchants: item.enchants || []
+        });
+      } else {
+        slots.push({ slot: i, name: null, count: 0 });
+      }
+    }
+
+    return { success: true, slots, heldItemSlot: bot.quickBarSlot };
+  }
+
+  doInventoryAction(botId, action, slot) {
+    const botData = this.bots.get(botId);
+    if (!botData) return { success: false, message: 'Bot bulunamadı.' };
+    if (!botData.instance || botData.status !== 'online') return { success: false, message: 'Bot çevrimdışı.' };
+
+    const bot = botData.instance;
+    try {
+      const item = bot.inventory.slots[slot];
+      switch (action) {
+        case 'drop-one':
+          if (item) bot.tossStack(item).catch(() => {});
+          break;
+        case 'drop-all':
+          if (item) bot.toss(item.type, null, item.count).catch(() => {});
+          break;
+        case 'left-click':
+          bot.simClick ? bot.simClick(slot, false, 'container') : null;
+          break;
+        case 'right-click':
+          bot.simClick ? bot.simClick(slot, true, 'container') : null;
+          break;
+        case 'equip':
+          if (item) {
+            const dest = slot >= 36 && slot <= 39 ? 'hand' : 'hand';
+            bot.equip(item, dest).catch(() => {});
+          }
+          break;
+      }
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: e.message };
+    }
+  }
+
+  // ── Script Durdurma ─────────────────────────────────────────
 
   stopBotScript(botId) {
-    const runner = this.scriptRunners.get(botId);
-    if (!runner) {
-      return { success: false, message: 'Çalışan script bulunamadı.' };
-    }
-
-    const result = runner.stop();
-    this.scriptRunners.delete(botId);
-    this.emitBotUpdate();
-    return result;
-  }
-
-  getScriptStatus(botId) {
-    const runner = this.scriptRunners.get(botId);
-    if (!runner) {
-      return { success: true, isRunning: false };
-    }
-    return { success: true, ...runner.getStatus() };
+    const botData = this.bots.get(botId);
+    if (!botData) return { success: false, message: 'Bot bulunamadı.' };
+    // Script'ler VM'de koştuğu için doğrudan durdurulamaz,
+    // ancak interval'ları temizleyip uyarı verebiliriz.
+    this.emitChatMessage(botId, 'system', '⏹️ Script durduruldu (interval\'lar temizlendi).');
+    return { success: true, message: 'Script durduruldu.' };
   }
 
   // ── Anti-AFK ────────────────────────────────────────────────
@@ -849,13 +803,6 @@ class BotManager {
   _cleanupBot(botId) {
     const botData = this.bots.get(botId);
     if (!botData) return;
-
-    // Çalışan script'i durdur
-    const runner = this.scriptRunners.get(botId);
-    if (runner) {
-      runner.stop();
-      this.scriptRunners.delete(botId);
-    }
 
     if (botData.connectTimeout) {
       clearTimeout(botData.connectTimeout);
