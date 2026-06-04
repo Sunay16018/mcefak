@@ -1,16 +1,16 @@
 /**
- * Minecraft AFK Client v3.1 - Ana Sunucu
+ * Minecraft AFK Client v3.0 - Ana Sunucu
  * 
- * Özellikler:
+ * Yeni özellikler:
  * - Bot koordinat, can, açlık takibi
- * - WASD hareket kontrolü (jump, sneak, sprint)
+ * - WASD hareket kontrolü (jump, sneak, sit)
  * - Bot başına özel script çalıştırma paneli
  * - Server Browser + Bot Kontrol Paneli
  * - mcstatus.io API ile sunucu ikonu, MOTD, oyuncu sayısı
  * - SOCKS5 proxy desteği
  * - Dinamik RAM limiti
  * 
- * @version 3.1.1
+ * @version 3.0.0
  */
 
 const express = require('express');
@@ -19,7 +19,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 require('dotenv').config();
 
-const BotManager = require('./botManager');
+const BotManager = require('./src/botManager');
 
 // ── Express & HTTP Sunucu Kurulumu ──────────────────────────────
 const app = express();
@@ -43,24 +43,21 @@ const botManager = new BotManager(io);
 
 // ── Socket.io Olayları ──────────────────────────────────────────
 io.on('connection', (socket) => {
-  console.log('[Socket] İstemci bağlandı:', socket.id);
+  console.log(`[Socket] İstemci bağlandı: ${socket.id}`);
 
   // Mevcut botları ve RAM kullanımını gönder
-  try {
-    socket.emit('ram-usage', botManager.getRamUsage());
-    socket.emit('bot-update', botManager.getAllBots());
-  } catch (err) {
-    console.error('[Socket] İlk veri gönderme hatası:', err.message);
-  }
+  socket.emit('ram-usage', botManager.getRamUsage());
+  socket.emit('bot-update', botManager.getAllBots());
 
   // ── Bot Ekle ────────────────────────────────────────────────
   socket.on('add-bot', async (data) => {
     try {
       const result = await botManager.addBot(data);
-      socket.emit('system-message', { 
-        type: result.success ? 'success' : 'error', 
-        text: result.message 
-      });
+      if (!result.success) {
+        socket.emit('system-message', { type: 'error', text: result.message });
+        return;
+      }
+      socket.emit('system-message', { type: 'success', text: result.message });
     } catch (err) {
       console.error('[Socket] add-bot hatası:', err);
       socket.emit('system-message', { type: 'error', text: 'Bot eklenirken beklenmeyen hata oluştu.' });
@@ -88,7 +85,7 @@ io.on('connection', (socket) => {
       const successCount = results.filter(r => r.success).length;
       socket.emit('system-message', { 
         type: 'success', 
-        text: successCount + '/' + botNames.length + ' bot eklendi.' 
+        text: `${successCount}/${botNames.length} bot eklendi.` 
       });
     } catch (err) {
       console.error('[Socket] add-bots-batch hatası:', err);
@@ -111,6 +108,7 @@ io.on('connection', (socket) => {
   });
 
   // ── Sunucudaki Tüm Botları Çıkar ────────────────────────────
+  socket.on('remove-server-bots', (serverKey) => {
     try {
       const result = botManager.removeServerBots(serverKey);
       socket.emit('system-message', { 
@@ -118,6 +116,7 @@ io.on('connection', (socket) => {
         text: result.message 
       });
     } catch (err) {
+      console.error('[Socket] remove-server-bots hatası:', err);
       socket.emit('system-message', { type: 'error', text: 'Sunucu botları çıkarılırken hata.' });
     }
   });
@@ -193,9 +192,9 @@ io.on('connection', (socket) => {
   });
 
   // ── Bot Hareket Kontrolü ──────────────────────────────────
-  socket.on('bot-move', ({ botId, action, state }) => {
+  socket.on('bot-move', ({ botId, action, state: moveState }) => {
     try {
-      const result = botManager.handleBotMove(botId, action, state);
+      const result = botManager.handleBotMove(botId, action, moveState);
       if (!result.success) {
         socket.emit('system-message', { type: 'error', text: result.message });
       }
@@ -217,7 +216,7 @@ io.on('connection', (socket) => {
         socket.emit('chat-message', { 
           botId, 
           type: 'system', 
-          text: '[Script Output] ' + result.output, 
+          text: `[Script Output] ${result.output}`, 
           timestamp: new Date().toLocaleTimeString('tr-TR') 
         });
       }
@@ -227,63 +226,31 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── Bot Script Durdur ─────────────────────────────────────
-  socket.on('stop-bot-script', (botId) => {
-    try {
-      const result = botManager.stopBotScript(botId);
-      socket.emit('system-message', { 
-        type: result.success ? 'success' : 'error', 
-        text: result.message 
-      });
-    } catch (err) {
-      console.error('[Socket] stop-bot-script hatası:', err);
-      socket.emit('system-message', { type: 'error', text: 'Script durdurma hatası.' });
-    }
-  });
-
-  // ── Bot Script Durumu Sorgula ─────────────────────────────
-  socket.on('get-script-status', (botId) => {
-    try {
-      const result = botManager.getScriptStatus(botId);
-      socket.emit('script-status', { botId, ...result });
-    } catch (err) {
-      console.error('[Socket] get-script-status hatası:', err);
-    }
-  });
-
   // ── Bağlantı Kopması ────────────────────────────────────────
   socket.on('disconnect', () => {
-    console.log('[Socket] İstemci ayrıldı:', socket.id);
+    console.log(`[Socket] İstemci ayrıldı: ${socket.id}`);
   });
 });
 
 // ── RAM Kullanımı & Bot Durumu Periyodik Yayını ────────────────
 setInterval(() => {
-  try {
-    io.emit('ram-usage', botManager.getRamUsage());
-  } catch (err) {
-    console.error('[Timer] RAM yayını hatası:', err.message);
-  }
+  io.emit('ram-usage', botManager.getRamUsage());
 }, 3000);
 
 // Bot durumlarını periyodik güncelle (koordinat, can, açlık)
 setInterval(() => {
-  try {
-    const botData = botManager.getAllBotsWithStats();
-    io.emit('bot-stats-update', botData);
-  } catch (err) {
-    console.error('[Timer] Bot stats hatası:', err.message);
-  }
+  const botData = botManager.getAllBotsWithStats();
+  io.emit('bot-stats-update', botData);
 }, 500);
 
 // ── Sunucuyu Başlat ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
-  console.log('\n╔══════════════════════════════════════════╗');
-  console.log('║   Minecraft AFK Client v3.1.1            ║');
-  console.log('║   Port: ' + PORT.toString().padEnd(33) + '║');
-  console.log('║   Mode: ' + (process.env.PORT ? 'Render.com' : 'Local').padEnd(33) + '║');
-  console.log('╚══════════════════════════════════════════╝\n');
+  console.log(`\n╔══════════════════════════════════════════╗`);
+  console.log(`║   Minecraft AFK Client v3.0.0            ║`);
+  console.log(`║   Port: ${PORT.toString().padEnd(33)}║`);
+  console.log(`║   Mode: ${(process.env.PORT ? 'Render.com' : 'Local').padEnd(33)}║`);
+  console.log(`╚══════════════════════════════════════════╝\n`);
 });
 
 // Graceful shutdown
