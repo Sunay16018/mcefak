@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft AFK Client v3.1</title>
+  <title>Minecraft AFK Client v3.0</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
@@ -54,8 +54,6 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      flex-wrap: wrap;
-      gap: 12px;
     }
 
     .logo {
@@ -370,9 +368,13 @@
       box-shadow: 0 6px 24px rgba(46, 160, 67, 0.35);
     }
 
-    .btn-new-server:active { transform: translateY(0); }
+    .btn-new-server:active {
+      transform: translateY(0);
+    }
 
-    .empty-state .btn-new-server { margin-top: 24px; }
+    .empty-state .btn-new-server {
+      margin-top: 24px;
+    }
 
     .modal-overlay {
       position: fixed;
@@ -549,8 +551,6 @@
       margin-bottom: 24px;
       padding-bottom: 20px;
       border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 16px;
     }
 
     .panel-title {
@@ -576,13 +576,11 @@
       align-items: center;
       gap: 10px;
       margin-top: 4px;
-      flex-wrap: wrap;
     }
 
     .panel-actions {
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
     }
 
     .btn-panel {
@@ -690,7 +688,6 @@
       align-items: center;
       gap: 8px;
       margin-top: 2px;
-      flex-wrap: wrap;
     }
 
     .bot-actions {
@@ -730,6 +727,7 @@
       border-color: var(--accent);
     }
 
+    /* ── Bot Stats Bar ──────────────────────────────────────── */
     .bot-stats {
       padding: 8px 16px;
       background: var(--bg-secondary);
@@ -758,6 +756,7 @@
     .bot-stat.food .stat-value { color: var(--warning); }
     .bot-stat.xp .stat-value { color: #a371f7; }
 
+    /* ── Movement Controls ──────────────────────────────────── */
     .movement-controls {
       padding: 10px 16px;
       background: var(--bg-secondary);
@@ -814,85 +813,6 @@
     }
 
     .move-btn.wide { width: 84px; font-size: 0.75rem; }
-    .move-btn.dig { 
-      width: 120px; 
-      font-size: 0.75rem; 
-      background: linear-gradient(135deg, #8B4513, #A0522D);
-      border-color: #8B4513;
-      color: white;
-    }
-    .move-btn.dig:hover {
-      background: linear-gradient(135deg, #A0522D, #CD853F);
-      border-color: #CD853F;
-    }
-    .move-btn.dig:active, .move-btn.dig.active {
-      background: rgba(139, 69, 19, 0.4);
-      border-color: #FFD700;
-      color: #FFD700;
-    }
-
-    .look-controls {
-      padding: 8px 16px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .look-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .look-label {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-      min-width: 50px;
-      text-transform: uppercase;
-    }
-
-    .look-slider {
-      flex: 1;
-      -webkit-appearance: none;
-      appearance: none;
-      height: 6px;
-      background: var(--bg-tertiary);
-      border-radius: 3px;
-      outline: none;
-      border: 1px solid var(--border);
-    }
-
-    .look-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      background: var(--accent);
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid var(--bg-primary);
-    }
-
-    .look-slider::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      background: var(--accent);
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid var(--bg-primary);
-    }
-
-    .look-value {
-      font-size: 0.75rem;
-      color: var(--accent);
-      font-weight: 700;
-      font-family: monospace;
-      min-width: 50px;
-      text-align: right;
-    }
 
     .move-label {
       font-size: 0.6rem;
@@ -900,26 +820,6 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-top: 3px;
-    }
-
-    .script-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      margin-left: 8px;
-    }
-    .script-status-badge.running {
-      background: rgba(88, 166, 255, 0.2);
-      color: var(--accent);
-      animation: pulse 1s infinite;
-    }
-    .script-status-badge.stopped {
-      background: var(--bg-tertiary);
-      color: var(--text-muted);
     }
 
     .bot-console {
@@ -991,6 +891,7 @@
 
     .btn-send:hover { background: var(--accent-hover); }
 
+    /* ── Script Panel ─────────────────────────────────────── */
     .script-panel {
       padding: 12px 16px;
       background: var(--bg-secondary);
@@ -1235,7 +1136,7 @@
       <div class="logo-icon">⛏️</div>
       <div>
         <h1>Minecraft AFK Client</h1>
-        <span>v3.1.0 • Bot Kontrol + Script + Hareket + Kazma + Bakış</span>
+        <span>v3.0.0 • Bot Kontrol + Script + Hareket</span>
       </div>
     </div>
     <div class="stats">
@@ -1259,7 +1160,7 @@
   </header>
 
   <main class="container page" id="page-server-browser">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
       <h2 class="section-title" style="margin-bottom:0;">🌐 Sunucu Listesi</h2>
       <button class="btn-new-server" id="btn-new-server">
         <span>➕</span> Yeni Sunucu Ekle
@@ -1423,15 +1324,9 @@
           <button class="btn-script" id="btn-run-script">
             <span>▶️</span> Çalıştır
           </button>
-          <button class="btn-script" id="btn-stop-script" style="background: linear-gradient(135deg, #f85149, #da3633);">
-            <span>⏹️</span> Durdur
-          </button>
           <button class="btn-script btn-script-clear" id="btn-clear-script">
             <span>🗑️</span> Temizle
           </button>
-        </div>
-        <div id="script-status-display" style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
-          Script durumu: <span id="script-status-text">Bekliyor</span>
         </div>
       </div>
     </div>
@@ -1440,47 +1335,44 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script>
-    // ═══════════════════════════════════════════════════════════════
-    // MINECRAFT AFK CLIENT v3.1 - FRONTEND CORE
-    // Hatasız, temiz, tek seferlik tanımlamalar
-    // ═══════════════════════════════════════════════════════════════
-
-    // ── Socket.IO Başlatma ─────────────────────────────────────────
+    // Socket.IO initialization with fallback for offline/demo mode
     let socket = null;
     let isOfflineMode = false;
 
-    function initSocket() {
-      try {
-        if (typeof io !== 'undefined' && typeof io === 'function') {
-          socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 10,
-            reconnectionDelay: 2000
-          });
-          console.log('[Socket] Bağlantı başlatıldı');
-          return true;
-        }
+    try {
+      if (typeof io !== 'undefined' && typeof io === 'function') {
+        socket = io({
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionAttempts: 10,
+          reconnectionDelay: 2000
+        });
+        console.log('[Socket] Bağlantı başlatıldı');
+      } else {
         throw new Error('Socket.IO library not loaded');
-      } catch (err) {
-        console.warn('[Socket] Çevrimdışı mod aktif:', err.message);
-        isOfflineMode = true;
-        enableOfflineMode();
-        return false;
       }
+    } catch (err) {
+      console.warn('[Socket] Çevrimdışı mod aktif:', err.message);
+      isOfflineMode = true;
+      // Create a mock socket for offline mode
+      socket = {
+        on: (event, handler) => {
+          // Store handlers for potential demo triggers
+          console.log('[Offline] Event listener registered:', event);
+        },
+        emit: (event, data) => {
+          console.log('[Offline] Emit:', event, data);
+          // Simulate responses for demo
+          if (event === 'add-bots-batch') {
+            const { serverIp, port, version, proxy, botNames } = data;
+            addBotsOffline(serverIp, port, version, proxy, botNames);
+          }
+        },
+        connected: false
+      };
     }
 
-    function enableOfflineMode() {
-      const badge = document.getElementById('offline-badge');
-      if (badge) badge.style.display = 'block';
-      document.getElementById('ram-usage').textContent = '0 / 0';
-      document.getElementById('bot-count').textContent = '0';
-      document.getElementById('bot-limit').textContent = '∞';
-      console.log('[App] Çevrimdışı mod aktif');
-    }
-
-    // ── Uygulama Durumu ────────────────────────────────────────────
-    const AppState = {
+    const state = {
       bots: new Map(),
       consoles: new Map(),
       servers: new Map(),
@@ -1490,12 +1382,12 @@
       antiAfkAllState: false
     };
 
-    // ── DOM Referansları ───────────────────────────────────────────
-    const DOM = {
-      pages: {
-        browser: document.getElementById('page-server-browser'),
-        panel: document.getElementById('page-bot-panel')
-      },
+    const pages = {
+      browser: document.getElementById('page-server-browser'),
+      panel: document.getElementById('page-bot-panel')
+    };
+
+    const els = {
       serverList: document.getElementById('server-list'),
       serverEmpty: document.getElementById('server-empty'),
       botsContainer: document.getElementById('bots-container'),
@@ -1530,17 +1422,15 @@
       modalPlayersClose: document.getElementById('modal-players-close'),
       playerList: document.getElementById('player-list'),
       modalScript: document.getElementById('modal-script'),
-      modalScriptClose: document.getElementById('modal-script-close'),
-      scriptEditor: document.getElementById('script-editor'),
-      scriptStatusText: document.getElementById('script-status-text')
+      modalScriptClose: document.getElementById('modal-script-close')
     };
 
-    // ── LocalStorage Sohbet Geçmişi ────────────────────────────────
+    // ── LocalStorage Sohbet Geçmişi ─────────────────────────────
     const STORAGE_KEY = 'mc-afk-chat-history';
 
     function saveMessageToStorage(botId, type, text, timestamp) {
       try {
-        const key = STORAGE_KEY + '-' + botId;
+        const key = `${STORAGE_KEY}-${botId}`;
         let messages = JSON.parse(localStorage.getItem(key) || '[]');
         messages.push({ type, text, timestamp });
         if (messages.length > 500) messages = messages.slice(-500);
@@ -1553,20 +1443,21 @@
     function loadMessagesFromStorage(botId) {
       try {
         if (!botId) return;
-        const key = STORAGE_KEY + '-' + botId;
+        const key = `${STORAGE_KEY}-${botId}`;
         const data = localStorage.getItem(key);
         if (!data) return;
         const messages = JSON.parse(data);
-        const consoleEl = document.getElementById('console-' + botId);
-        if (!consoleEl) return;
-        consoleEl.innerHTML = '';
-        messages.forEach(m => {
-          const line = document.createElement('div');
-          line.className = 'console-line ' + m.type;
-          line.innerHTML = '<span class="timestamp">' + m.timestamp + '</span>' + escapeHtml(m.text);
-          consoleEl.appendChild(line);
-        });
-        consoleEl.scrollTop = consoleEl.scrollHeight;
+        const consoleEl = document.getElementById(`console-${botId}`);
+        if (consoleEl) {
+          consoleEl.innerHTML = '';
+          messages.forEach(m => {
+            const line = document.createElement('div');
+            line.className = `console-line ${m.type}`;
+            line.innerHTML = `<span class="timestamp">${m.timestamp}</span>${escapeHtml(m.text)}`;
+            consoleEl.appendChild(line);
+          });
+          consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
       } catch (e) {
         console.error('[Storage] Yükleme hatası:', e);
       }
@@ -1574,17 +1465,18 @@
 
     function clearStorageForBot(botId) {
       try {
-        localStorage.removeItem(STORAGE_KEY + '-' + botId);
+        localStorage.removeItem(`${STORAGE_KEY}-${botId}`);
       } catch (e) {}
     }
 
-    // ── Çevrimdışı Mod Yardımcıları ────────────────────────────────
+
+    // ── Çevrimdışı Mod Yardımcıları ───────────────────────────
     function addBotsOffline(serverIp, port, version, proxy, botNames) {
-      const serverKey = serverIp + ':' + port;
+      const serverKey = `${serverIp}:${port}`;
       const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       botNames.forEach((name, idx) => {
-        const botId = 'offline-bot-' + Date.now() + '-' + idx + '-' + Math.random().toString(36).substr(2, 5);
+        const botId = 'offline-bot-' + Date.now() + '-' + idx;
         const bot = {
           id: botId,
           name: name,
@@ -1601,32 +1493,77 @@
           food: 20, foodSaturation: 0,
           xp: 0, level: 0
         };
-        AppState.bots.set(botId, bot);
-        AppState.consoles.set(botId, []);
+        state.bots.set(botId, bot);
+        state.consoles.set(botId, []);
 
+        // Demo mesaj ekle
         setTimeout(() => {
-          addConsoleMessage(botId, 'system', name + ' sunucuya bağlandı (' + serverIp + ':' + port + ')', now);
-          addConsoleMessage(botId, 'info', 'Sürüm: ' + version + ' | Proxy: ' + (proxy || 'Yok'), now);
+          addConsoleMessage(botId, 'system', `${name} sunucuya bağlandı (${serverIp}:${port})`, now);
+          addConsoleMessage(botId, 'info', `Sürüm: ${version} | Proxy: ${proxy || 'Yok'}`, now);
         }, 300 + idx * 200);
       });
 
       updateServersFromBots();
       renderServerBrowser();
-      if (AppState.currentServerKey === serverKey) {
+      if (state.currentServerKey === serverKey) {
         renderBotPanel();
-      } else if (!AppState.currentServerKey) {
+      } else if (!state.currentServerKey) {
+        // Otomatik olarak sunucu panelini aç
         setTimeout(() => openServerPanel(serverKey), 500);
       }
     }
 
-    // ── Socket Olayları ────────────────────────────────────────────
-    function setupSocketListeners() {
-      if (isOfflineMode || !socket || typeof socket.on !== 'function') return;
+    // ── Socket Olayları ────────────────────────────────────────
 
+    // ── Çevrimdışı Mod Yardımcıları ───────────────────────────
+    function addBotsOffline(serverIp, port, version, proxy, botNames) {
+      const serverKey = `${serverIp}:${port}`;
+      const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      botNames.forEach((name, idx) => {
+        const botId = 'offline-bot-' + Date.now() + '-' + idx;
+        const bot = {
+          id: botId,
+          name: name,
+          serverIp: serverIp,
+          serverPort: port,
+          serverKey: serverKey,
+          version: version,
+          hasProxy: !!proxy,
+          proxy: proxy || '',
+          status: 'online',
+          antiAfkEnabled: false,
+          x: 0, y: 64, z: 0,
+          health: 20, maxHealth: 20,
+          food: 20, foodSaturation: 0,
+          xp: 0, level: 0
+        };
+        state.bots.set(botId, bot);
+        state.consoles.set(botId, []);
+
+        // Demo mesaj ekle
+        setTimeout(() => {
+          addConsoleMessage(botId, 'system', `${name} sunucuya bağlandı (${serverIp}:${port})`, now);
+          addConsoleMessage(botId, 'info', `Sürüm: ${version} | Proxy: ${proxy || 'Yok'}`, now);
+        }, 300 + idx * 200);
+      });
+
+      updateServersFromBots();
+      renderServerBrowser();
+      if (state.currentServerKey === serverKey) {
+        renderBotPanel();
+      } else if (!state.currentServerKey) {
+        // Otomatik olarak sunucu panelini aç
+        setTimeout(() => openServerPanel(serverKey), 500);
+      }
+    }
+
+    // ── Socket Olayları ────────────────────────────────────────
+    if (!isOfflineMode && socket && typeof socket.on === 'function') {
       socket.on('connect', () => {
         console.log('[Socket] Bağlandı');
         setTimeout(() => {
-          for (const [botId] of AppState.bots) {
+          for (const [botId] of state.bots) {
             loadMessagesFromStorage(botId);
           }
         }, 1000);
@@ -1635,27 +1572,25 @@
       socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
       socket.on('ram-usage', (data) => {
-        if (!data) return;
-        DOM.ramUsage.textContent = (data.usedRamMB || 0) + ' / ' + (data.totalRamMB || 0);
-        DOM.botCount.textContent = data.botCount || 0;
-        DOM.botLimit.textContent = data.maxBots || '-';
+        els.ramUsage.textContent = `${data.usedRamMB} / ${data.totalRamMB}`;
+        els.botCount.textContent = data.botCount;
+        els.botLimit.textContent = data.maxBots;
       });
 
       socket.on('bot-update', (bots) => {
-        if (!Array.isArray(bots)) return;
         console.log('[Socket] bot-update:', bots.length, 'bots');
-        const currentIds = new Set(AppState.bots.keys());
+        const currentIds = new Set(state.bots.keys());
         const newIds = new Set(bots.map(b => b.id));
 
         for (const id of currentIds) {
           if (!newIds.has(id)) {
-            AppState.bots.delete(id);
-            AppState.consoles.delete(id);
+            state.bots.delete(id);
+            state.consoles.delete(id);
           }
         }
 
         for (const bot of bots) {
-          const existing = AppState.bots.get(bot.id);
+          const existing = state.bots.get(bot.id);
           if (existing) {
             Object.assign(bot, {
               x: existing.x, y: existing.y, z: existing.z,
@@ -1664,9 +1599,9 @@
               xp: existing.xp, level: existing.level
             });
           }
-          AppState.bots.set(bot.id, bot);
-          if (!AppState.consoles.has(bot.id)) {
-            AppState.consoles.set(bot.id, []);
+          state.bots.set(bot.id, bot);
+          if (!state.consoles.has(bot.id)) {
+            state.consoles.set(bot.id, []);
           }
           if (existing && existing.antiAfkEnabled !== bot.antiAfkEnabled) {
             updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
@@ -1675,31 +1610,25 @@
 
         updateServersFromBots();
         renderServerBrowser();
-        if (AppState.currentServerKey) {
+        if (state.currentServerKey) {
           renderBotPanel();
         }
       });
 
       socket.on('bot-stats-update', (bots) => {
-        if (!Array.isArray(bots)) return;
         for (const bot of bots) {
-          if (!bot || !bot.id) continue;
-          const existing = AppState.bots.get(bot.id);
-          if (existing) {
-            AppState.bots.set(bot.id, Object.assign({}, existing, bot));
-          }
+          state.bots.set(bot.id, { ...state.bots.get(bot.id), ...bot });
           updateBotStats(bot);
         }
       });
 
       socket.on('chat-message', ({ botId, type, text, timestamp }) => {
-        if (!botId) return;
         addConsoleMessage(botId, type, text, timestamp);
         saveMessageToStorage(botId, type, text, timestamp);
       });
 
       socket.on('player-list', ({ botId, players }) => {
-        if (AppState.currentPlayerListBot === botId) {
+        if (state.currentPlayerListBot === botId) {
           showPlayerList(players);
         }
       });
@@ -1707,30 +1636,32 @@
       socket.on('system-message', ({ type, text }) => {
         showToast(type, text);
       });
-
-      socket.on('script-status', ({ botId, isRunning }) => {
-        if (AppState.currentScriptBotId === botId) {
-          updateScriptStatus(isRunning ? 'running' : 'stopped');
-        }
-      });
+    } else {
+      // Çevrimdışı mod - göstergeyi aktif et ve varsayılan değerleri ayarla
+      const offlineBadge = document.getElementById('offline-badge');
+      if (offlineBadge) offlineBadge.style.display = 'block';
+      els.ramUsage.textContent = '0 / 0';
+      els.botCount.textContent = '0';
+      els.botLimit.textContent = '∞';
+      console.log('[App] Çevrimdışı mod - Socket.IO sunucusu bağlı değil');
     }
 
-    // ── Sunucu Verisi Yönetimi ─────────────────────────────────────
+    // ── Sunucu Verisi Yönetimi ─────────────────────────────────
     function updateServersFromBots() {
-      AppState.servers.clear();
+      state.servers.clear();
 
-      for (const bot of AppState.bots.values()) {
-        const key = bot.serverKey || (bot.serverIp + ':' + bot.serverPort);
+      for (const bot of state.bots.values()) {
+        const key = bot.serverKey || `${bot.serverIp}:${bot.serverPort}`;
         if (!key) continue;
 
-        if (!AppState.servers.has(key)) {
-          AppState.servers.set(key, {
+        if (!state.servers.has(key)) {
+          state.servers.set(key, {
             serverKey: key,
             serverIp: bot.serverIp,
             serverPort: bot.serverPort,
             version: bot.version,
             hasProxy: bot.hasProxy,
-            proxy: bot.proxy || '',
+            proxy: '',
             bots: [],
             icon: null,
             motd: '',
@@ -1740,7 +1671,7 @@
           });
         }
 
-        const server = AppState.servers.get(key);
+        const server = state.servers.get(key);
         server.bots.push(bot);
 
         if (bot.status === 'online') server.status = 'online';
@@ -1748,7 +1679,7 @@
         else if (bot.status === 'connecting' && server.status === 'offline') server.status = 'connecting';
       }
 
-      for (const server of AppState.servers.values()) {
+      for (const server of state.servers.values()) {
         server.onlineBotCount = server.bots.filter(b => b.status === 'online').length;
         server.totalBotCount = server.bots.length;
         fetchServerInfo(server);
@@ -1756,102 +1687,93 @@
     }
 
     async function fetchServerInfo(server) {
-      if (isOfflineMode) {
-        server.motd = 'Çevrimdışı mod';
-        server.onlinePlayers = 0;
-        server.maxPlayers = 20;
-        renderServerBrowser();
-        if (AppState.currentServerKey === server.serverKey) {
-          updatePanelHeader(server);
-        }
-        return;
-      }
-
       try {
-        const response = await fetch('https://api.mcsrvstat.us/3/' + server.serverIp + ':' + server.serverPort, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).catch(() => null);
-
-        if (!response) return;
-
+        // Çevrimdışı modda API çağrısı atma
+        if (isOfflineMode) {
+          server.motd = 'Çevrimdışı mod - MOTD bilgisi yok';
+          server.onlinePlayers = 0;
+          server.maxPlayers = 20;
+          renderServerBrowser();
+          if (state.currentServerKey === server.serverKey) {
+            updatePanelHeader(server);
+          }
+          return;
+        }
+        const response = await fetch(`https://api.mcsrvstat.us/3/${server.serverIp}:${server.serverPort}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          }).catch(() => null);
+        if (!response) {
+          console.log('[API] Sunucu bilgisi alınamadı (ağ hatası)');
+          renderServerBrowser();
+          return;
+        }
         const data = await response.json();
 
         if (data && data.online) {
           server.motd = (data.motd && data.motd.clean && data.motd.clean[0]) || 
-                         (data.motd && data.motd.raw && data.motd.raw[0]) || 
-                         (data.motd && data.motd.html && data.motd.html[0]) || '';
+                         (data.motd && data.motd.raw && data.motd.raw[0]) || '';
           server.onlinePlayers = (data.players && data.players.online) || 0;
           server.maxPlayers = (data.players && data.players.max) || 0;
-
-          if (data.version) {
-            server.version = (typeof data.version === 'string') ? data.version : 
-              (data.version.name_clean || data.version.name || data.version.raw || server.version);
-          }
-
-          if (data.icon && typeof data.icon === 'string') {
-            if (data.icon.startsWith('data:image')) {
-              server.icon = data.icon;
-            } else {
-              server.icon = 'data:image/png;base64,' + data.icon;
-            }
-          }
+          if (data.version) server.version = (typeof data.version === 'string') ? data.version : (data.version.name_clean || data.version.name || server.version);
+          if (data.icon) server.icon = data.icon;
         }
 
         renderServerBrowser();
-        if (AppState.currentServerKey === server.serverKey) {
+        if (state.currentServerKey === server.serverKey) {
           updatePanelHeader(server);
         }
       } catch (err) {
+        // API hatası - sessizce geç
         console.log('[API] Sunucu bilgisi alınamadı:', err.message);
       }
     }
 
-    // ── Sayfa Geçişleri ────────────────────────────────────────────
+    // ── Sayfa Geçişleri ────────────────────────────────────────
     function showPage(pageName) {
       if (pageName === 'browser') {
-        DOM.pages.browser.classList.remove('hidden');
-        DOM.pages.panel.classList.add('hidden');
-        AppState.currentServerKey = null;
+        pages.browser.classList.remove('hidden');
+        pages.panel.classList.add('hidden');
+        state.currentServerKey = null;
       } else if (pageName === 'panel') {
-        DOM.pages.browser.classList.add('hidden');
-        DOM.pages.panel.classList.remove('hidden');
+        pages.browser.classList.add('hidden');
+        pages.panel.classList.remove('hidden');
       }
     }
 
-    DOM.btnBack.addEventListener('click', () => showPage('browser'));
+    els.btnBack.addEventListener('click', () => {
+      showPage('browser');
+    });
 
-    // ── Server Browser Render ──────────────────────────────────────
+    // ── Server Browser Render ──────────────────────────────────
     function renderServerBrowser() {
-      const servers = Array.from(AppState.servers.values());
+      const servers = Array.from(state.servers.values());
 
       if (servers.length === 0) {
-        DOM.serverList.style.display = 'none';
-        DOM.serverEmpty.style.display = 'block';
+        els.serverList.style.display = 'none';
+        els.serverEmpty.style.display = 'block';
         return;
       }
 
-      DOM.serverList.style.display = 'flex';
-      DOM.serverEmpty.style.display = 'none';
+      els.serverList.style.display = 'flex';
+      els.serverEmpty.style.display = 'none';
 
-      const existingCards = new Set();
       for (const server of servers) {
         const safeId = 'server-card-' + server.serverKey.replace(/[^a-zA-Z0-9]/g, '-');
-        existingCards.add(safeId);
         let card = document.getElementById(safeId);
 
         if (!card) {
           card = createServerCard(server);
-          card.id = safeId;
-          DOM.serverList.appendChild(card);
+          els.serverList.appendChild(card);
         } else {
           updateServerCard(card, server);
         }
       }
 
-      const cards = DOM.serverList.querySelectorAll('.server-card');
+      const cards = els.serverList.querySelectorAll('.server-card');
       for (const card of cards) {
-        if (!existingCards.has(card.id)) {
+        const key = card.dataset.serverKey;
+        if (!state.servers.has(key)) {
           card.remove();
         }
       }
@@ -1859,7 +1781,9 @@
 
     function createServerCard(server) {
       const card = document.createElement('div');
+      const safeId = 'server-card-' + server.serverKey.replace(/[^a-zA-Z0-9]/g, '-');
       card.className = 'server-card has-' + server.status;
+      card.id = safeId;
       card.dataset.serverKey = server.serverKey;
 
       const statusColor = {
@@ -1869,12 +1793,9 @@
         connecting: 'var(--connecting)'
       }[server.status] || 'var(--offline)';
 
-      let iconHtml;
-      if (server.icon && server.icon.startsWith('data:image')) {
-        iconHtml = '<img src="' + server.icon + '" alt="icon">';
-      } else {
-        iconHtml = '<span class="icon-placeholder">🖥️</span>';
-      }
+      const iconHtml = server.icon 
+        ? '<img src="' + server.icon + '" alt="icon">' 
+        : '<span class="icon-placeholder">🖥️</span>';
 
       card.innerHTML = `
         <div class="server-icon">${iconHtml}</div>
@@ -1907,6 +1828,7 @@
         </div>
       `;
 
+      // Bot Ekle butonu - KART CLICK'TEN ÖNCE
       const addBtn = card.querySelector('[data-action="add"]');
       if (addBtn) {
         addBtn.addEventListener('click', (e) => {
@@ -1915,42 +1837,55 @@
         });
       }
 
+      // Tümünü Çıkar butonu - KART CLICK'TEN ÖNCE
       const removeBtn = card.querySelector('[data-action="remove-all"]');
       if (removeBtn) {
         removeBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (confirm('"' + server.serverIp + '" sunucusundaki tüm botları çıkarmak istiyor musun?')) {
             if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-              socket.emit('remove-server-bots', server.serverKey);
-            } else {
-              offlineRemoveServerBots(server.serverKey);
-            }
+            socket.emit('remove-server-bots', server.serverKey);
+          } else {
+            // Çevrimdışı mod - tüm botları yerel sil
+            const botsToRemove = server.bots || [];
+            botsToRemove.forEach(b => {
+              state.bots.delete(b.id);
+              state.consoles.delete(b.id);
+              clearStorageForBot(b.id);
+            });
+            updateServersFromBots();
+            renderServerBrowser();
+            showToast('success', 'Tüm botlar çıkarıldı (Çevrimdışı mod)');
+          }
           }
         });
       }
 
+      // Kartın kendisine tıklama (panel aç) - BUTONLARDAN SONRA
       card.addEventListener('click', (e) => {
         if (e.target.closest('.server-actions')) return;
         openServerPanel(server.serverKey);
       });
+
+      if (server.bots && server.bots.length > 0) {
+        server.bots.forEach(b => {
+          if (b && b.id) loadMessagesFromStorage(b.id);
+        });
+      }
 
       return card;
     }
 
     function updateServerCard(card, server) {
       const iconEl = card.querySelector('.server-icon');
-      if (iconEl) {
-        if (server.icon && server.icon.startsWith('data:image')) {
-          iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon">';
-        } else {
-          iconEl.innerHTML = '<span class="icon-placeholder">🖥️</span>';
-        }
+      if (iconEl && server.icon) {
+        iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon">';
       }
 
       card.className = 'server-card has-' + server.status;
 
       const motdEl = card.querySelector('.server-motd');
-      if (motdEl) motdEl.textContent = server.motd || 'MOTD yükleniyor...';
+      if (motdEl && server.motd) motdEl.textContent = server.motd;
 
       const metaEl = card.querySelector('.server-meta');
       if (metaEl) {
@@ -1964,27 +1899,14 @@
 
       const countEl = card.querySelector('.player-count .count');
       if (countEl) {
-        countEl.innerHTML = server.onlineBotCount + '<span>/' + server.totalBotCount + '</span>';
+        countEl.innerHTML = `${server.onlineBotCount}<span>/${server.totalBotCount}</span>`;
       }
     }
 
-    function offlineRemoveServerBots(serverKey) {
-      const server = AppState.servers.get(serverKey);
-      if (!server) return;
-      (server.bots || []).forEach(b => {
-        AppState.bots.delete(b.id);
-        AppState.consoles.delete(b.id);
-        clearStorageForBot(b.id);
-      });
-      updateServersFromBots();
-      renderServerBrowser();
-      showToast('success', 'Tüm botlar çıkarıldı (Çevrimdışı mod)');
-    }
-
-    // ── Bot Kontrol Paneli ───────────────────────────────────────
+    // ── Bot Kontrol Paneli ─────────────────────────────────────
     function openServerPanel(serverKey) {
-      AppState.currentServerKey = serverKey;
-      const server = AppState.servers.get(serverKey);
+      state.currentServerKey = serverKey;
+      const server = state.servers.get(serverKey);
       if (!server) return;
 
       updatePanelHeader(server);
@@ -1993,43 +1915,39 @@
     }
 
     function updatePanelHeader(server) {
-      DOM.panelServerName.textContent = server.serverIp;
-      DOM.panelServerIp.textContent = server.serverIp + ':' + server.serverPort;
-      DOM.panelVersion.textContent = server.version;
-      DOM.panelProxyBadge.style.display = server.hasProxy ? 'inline' : 'none';
+      els.panelServerName.textContent = server.serverIp;
+      els.panelServerIp.textContent = server.serverIp + ':' + server.serverPort;
+      els.panelVersion.textContent = server.version;
+      els.panelProxyBadge.style.display = server.hasProxy ? 'inline' : 'none';
 
-      if (server.icon && server.icon.startsWith('data:image')) {
-        DOM.panelIcon.innerHTML = '<img src="' + server.icon + '" alt="icon">';
+      if (server.icon) {
+        els.panelIcon.innerHTML = '<img src="' + server.icon + '" alt="icon">';
       } else {
-        DOM.panelIcon.innerHTML = '<span class="icon-placeholder">🖥️</span>';
+        els.panelIcon.innerHTML = '<span class="icon-placeholder">🖥️</span>';
       }
     }
 
     function renderBotPanel() {
-      const server = AppState.servers.get(AppState.currentServerKey);
+      const server = state.servers.get(state.currentServerKey);
       if (!server) return;
 
-      const bots = server.bots || [];
+      const bots = server.bots;
 
       if (bots.length === 0) {
-        DOM.botsContainer.style.display = 'none';
-        DOM.panelEmpty.style.display = 'block';
+        els.botsContainer.style.display = 'none';
+        els.panelEmpty.style.display = 'block';
         return;
       }
 
-      DOM.botsContainer.style.display = 'grid';
-      DOM.panelEmpty.style.display = 'none';
+      els.botsContainer.style.display = 'grid';
+      els.panelEmpty.style.display = 'none';
 
-      const existingCards = new Set();
       for (const bot of bots) {
-        const cardId = 'card-' + bot.id;
-        existingCards.add(cardId);
-        let card = document.getElementById(cardId);
+        let card = document.getElementById('card-' + bot.id);
 
         if (!card) {
           card = createBotCard(bot);
-          card.id = cardId;
-          DOM.botsContainer.appendChild(card);
+          els.botsContainer.appendChild(card);
         } else {
           updateBotCard(card, bot);
         }
@@ -2038,9 +1956,11 @@
         }
       }
 
-      const cards = DOM.botsContainer.querySelectorAll('.bot-card');
+      const cards = els.botsContainer.querySelectorAll('.bot-card');
       for (const card of cards) {
-        if (!existingCards.has(card.id)) {
+        const botId = card.dataset.botId;
+        const bot = state.bots.get(botId);
+        if (!bot || bot.serverKey !== state.currentServerKey) {
           card.remove();
         }
       }
@@ -2049,15 +1969,16 @@
     function createBotCard(bot) {
       const card = document.createElement('div');
       card.className = 'bot-card';
+      card.id = 'card-' + bot.id;
       card.dataset.botId = bot.id;
 
-      const statusClass = bot.status || 'offline';
+      const statusClass = bot.status;
       const statusText = {
         online: 'Çevrimiçi',
         offline: 'Çevrimdışı',
         error: 'Hata',
         connecting: 'Bağlanıyor...'
-      }[bot.status] || (bot.status || 'Bilinmiyor');
+      }[bot.status] || bot.status;
 
       card.innerHTML = `
         <div class="bot-card-header">
@@ -2099,18 +2020,6 @@
             <span class="stat-value" id="pos-${bot.id}" style="font-family:monospace;font-size:0.7rem;">-</span>
           </div>
         </div>
-        <div class="look-controls" id="look-${bot.id}">
-          <div class="look-row">
-            <span class="look-label">Yatay</span>
-            <input type="range" class="look-slider" id="yaw-${bot.id}" min="-180" max="180" value="0" data-bot="${bot.id}">
-            <span class="look-value" id="yaw-val-${bot.id}">0°</span>
-          </div>
-          <div class="look-row">
-            <span class="look-label">Dikey</span>
-            <input type="range" class="look-slider" id="pitch-${bot.id}" min="-90" max="90" value="0" data-bot="${bot.id}">
-            <span class="look-value" id="pitch-val-${bot.id}">0°</span>
-          </div>
-        </div>
         <div class="movement-controls" id="movement-${bot.id}">
           <div class="movement-row">
             <button class="move-btn" data-move="forward" data-bot="${bot.id}">W</button>
@@ -2128,9 +2037,8 @@
           <div class="movement-row">
             <button class="move-btn wide" data-move="swing" data-bot="${bot.id}">✋ Sallan</button>
             <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
-            <button class="move-btn wide dig" data-move="dig" data-bot="${bot.id}">⛏️ Kaz</button>
           </div>
-          <div class="move-label">WASD: Basılı Tut | Kazma: Toggle (Tıkla=Aç/Kapat)</div>
+          <div class="move-label">Basılı Tut = Sürekli Çalışır | Bırak = Durur</div>
         </div>
         <div class="bot-console" id="console-${bot.id}"></div>
         <div class="bot-controls">
@@ -2139,23 +2047,29 @@
         </div>
       `;
 
-      // Bot çıkarma
       card.querySelector('[data-action="remove"]').addEventListener('click', () => {
         if (!isOfflineMode && socket && typeof socket.emit === 'function') {
           socket.emit('remove-bot', bot.id);
         } else {
-          offlineRemoveBot(bot.id);
+          // Çevrimdışı mod - yerel sil
+          state.bots.delete(bot.id);
+          state.consoles.delete(bot.id);
+          clearStorageForBot(bot.id);
+          updateServersFromBots();
+          renderServerBrowser();
+          if (state.currentServerKey) renderBotPanel();
+          showToast('success', 'Bot çıkarıldı (Çevrimdışı mod)');
         }
       });
 
-      // Oyuncu listesi
       card.querySelector('[data-action="players"]').addEventListener('click', () => {
-        AppState.currentPlayerListBot = bot.id;
-        DOM.playerList.innerHTML = '<li class="player-item">Yükleniyor...</li>';
-        DOM.modalPlayers.classList.add('active');
+        state.currentPlayerListBot = bot.id;
+        els.playerList.innerHTML = '<li class="player-item">Yükleniyor...</li>';
+        els.modalPlayers.classList.add('active');
         if (!isOfflineMode && socket && typeof socket.emit === 'function') {
           socket.emit('request-player-list', bot.id);
         } else {
+          // Çevrimdışı mod - demo oyuncu listesi
           showPlayerList([
             { username: 'Steve', ping: 45 },
             { username: 'Alex', ping: 62 },
@@ -2165,125 +2079,75 @@
         }
       });
 
-      // Anti-AFK toggle
       card.querySelector('[data-action="antiafk"]').addEventListener('click', () => {
         const newState = !bot.antiAfkEnabled;
         if (!isOfflineMode && socket && typeof socket.emit === 'function') {
           socket.emit('toggle-antiafk', { botId: bot.id, enabled: newState });
         } else {
-          offlineToggleAntiAfk(bot.id, newState);
+          // Çevrimdışı mod - yerel toggle
+          bot.antiAfkEnabled = newState;
+          updateAntiAfkButton(bot.id, newState);
+          const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          addConsoleMessage(bot.id, 'system', `Anti-AFK ${newState ? 'aktif' : 'devre dışı'} (Çevrimdışı)`, now);
+          showToast('success', `Anti-AFK ${newState ? 'aktif' : 'devre dışı'} (Çevrimdışı mod)`);
         }
       });
 
-      // Script panel
       card.querySelector('[data-action="script"]').addEventListener('click', () => {
         openScriptModal(bot.id, bot.name);
       });
 
-      // Mesaj gönderme
       const msgInput = card.querySelector('.msg-input');
       const sendBtn = card.querySelector('[data-action="send"]');
 
       sendBtn.addEventListener('click', () => {
         const msg = msgInput.value.trim();
-        if (!msg) return;
-        if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-          socket.emit('send-message', { botId: bot.id, message: msg });
-        } else {
-          const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          addConsoleMessage(bot.id, 'self', msg, now);
-          saveMessageToStorage(bot.id, 'self', msg, now);
+        if (msg) {
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('send-message', { botId: bot.id, message: msg });
+          } else {
+            // Çevrimdışı mod - yerel göster
+            const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            addConsoleMessage(bot.id, 'self', msg, now);
+            saveMessageToStorage(bot.id, 'self', msg, now);
+          }
+          msgInput.value = '';
         }
-        msgInput.value = '';
       });
 
       msgInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendBtn.click();
       });
 
-      // Bakış yönü slider'ları
-      const yawSlider = card.querySelector('#yaw-' + bot.id);
-      const pitchSlider = card.querySelector('#pitch-' + bot.id);
-      const yawVal = card.querySelector('#yaw-val-' + bot.id);
-      const pitchVal = card.querySelector('#pitch-val-' + bot.id);
-
-      if (yawSlider) {
-        yawSlider.addEventListener('input', (e) => {
-          const deg = parseInt(e.target.value);
-          yawVal.textContent = deg + '°';
-          const rad = deg * Math.PI / 180;
-          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-            socket.emit('bot-move', { botId: bot.id, action: 'lookYaw', state: rad });
-          }
-        });
-      }
-
-      if (pitchSlider) {
-        pitchSlider.addEventListener('input', (e) => {
-          const deg = parseInt(e.target.value);
-          pitchVal.textContent = deg + '°';
-          const rad = deg * Math.PI / 180;
-          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-            socket.emit('bot-move', { botId: bot.id, action: 'lookPitch', state: rad });
-          }
-        });
-      }
-
-      // Hareket kontrolleri
-      setupMovementControls(card, bot.id);
-
-      if (bot && bot.id) {
-        loadMessagesFromStorage(bot.id);
-      }
-
-      return card;
-    }
-
-    function setupMovementControls(card, botId) {
+      // ── Hareket Kontrolleri ────────────────────────────────
       const moveButtons = card.querySelectorAll('.move-btn');
       moveButtons.forEach(btn => {
         const moveAction = btn.dataset.move;
-
-        // KAZMA butonu - toggle mantığı
-        if (moveAction === 'dig') {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isActive = btn.classList.contains('active');
-            if (!isActive) {
-              btn.classList.add('active');
-              if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-                socket.emit('bot-move', { botId: botId, action: moveAction, state: true });
-              }
-            } else {
-              btn.classList.remove('active');
-              if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-                socket.emit('bot-move', { botId: botId, action: moveAction, state: false });
-              }
-            }
-          });
-          return;
-        }
-
-        // Diğer butonlar - basılı tutma mantığı
         let holdInterval = null;
         let isHolding = false;
 
+        // Basılı tutma başladığında
         const startHold = (e) => {
           if (e) e.preventDefault();
           if (isHolding) return;
           isHolding = true;
           btn.classList.add('active');
+
+          // İlk eylem hemen gönder
           if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-            socket.emit('bot-move', { botId: botId, action: moveAction, state: true });
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
           }
+
+          // Basılı tutulduğu sürece her 100ms'de bir tekrarla (sürekli hareket)
           holdInterval = setInterval(() => {
             if (!isHolding) return;
             if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-              socket.emit('bot-move', { botId: botId, action: moveAction, state: true });
+              socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
             }
           }, 100);
         };
 
+        // Basılı tutma bittiğinde
         const endHold = (e) => {
           if (e) e.preventDefault();
           if (!isHolding) return;
@@ -2293,38 +2157,30 @@
             clearInterval(holdInterval);
             holdInterval = null;
           }
+          // Durma sinyali gönder
           if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-            socket.emit('bot-move', { botId: botId, action: moveAction, state: false });
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
           }
         };
 
+        // Mouse events
         btn.addEventListener('mousedown', startHold);
         btn.addEventListener('mouseup', endHold);
-        btn.addEventListener('mouseleave', () => { if (isHolding) endHold(); });
+        btn.addEventListener('mouseleave', () => {
+          if (isHolding) endHold();
+        });
+
+        // Touch events (mobile)
         btn.addEventListener('touchstart', startHold, { passive: false });
         btn.addEventListener('touchend', endHold, { passive: false });
         btn.addEventListener('touchcancel', endHold, { passive: false });
       });
-    }
 
-    function offlineRemoveBot(botId) {
-      AppState.bots.delete(botId);
-      AppState.consoles.delete(botId);
-      clearStorageForBot(botId);
-      updateServersFromBots();
-      renderServerBrowser();
-      if (AppState.currentServerKey) renderBotPanel();
-      showToast('success', 'Bot çıkarıldı (Çevrimdışı mod)');
-    }
+      if (bot && bot.id) {
+        loadMessagesFromStorage(bot.id);
+      }
 
-    function offlineToggleAntiAfk(botId, newState) {
-      const bot = AppState.bots.get(botId);
-      if (!bot) return;
-      bot.antiAfkEnabled = newState;
-      updateAntiAfkButton(botId, newState);
-      const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      addConsoleMessage(botId, 'system', 'Anti-AFK ' + (newState ? 'aktif' : 'devre dışı') + ' (Çevrimdışı)', now);
-      showToast('success', 'Anti-AFK ' + (newState ? 'aktif' : 'devre dışı') + ' (Çevrimdışı mod)');
+      return card;
     }
 
     function updateBotCard(card, bot) {
@@ -2332,71 +2188,39 @@
       const statusText = card.querySelector('#status-' + bot.id);
       const nameEl = card.querySelector('.bot-name');
 
-      const statusClass = bot.status || 'offline';
+      const statusClass = bot.status;
       const statusLabel = {
         online: 'Çevrimiçi',
         offline: 'Çevrimdışı',
         error: 'Hata',
         connecting: 'Bağlanıyor...'
-      }[bot.status] || (bot.status || 'Bilinmiyor');
+      }[bot.status] || bot.status;
 
-      if (statusDot) statusDot.className = 'status-dot ' + statusClass;
+      statusDot.className = 'status-dot ' + statusClass;
       if (statusText) statusText.textContent = statusLabel;
-      if (nameEl) nameEl.textContent = bot.name || 'Bot';
+      if (nameEl) nameEl.textContent = bot.name;
 
       const coordsEl = card.querySelector('#coords-' + bot.id);
-      if (coordsEl && bot.x !== null && bot.x !== undefined) {
-        coordsEl.textContent = 'X:' + bot.x + ' Y:' + bot.y + ' Z:' + bot.z;
-      }
-
-      const scriptBadge = card.querySelector('.script-status-badge');
-      if (!scriptBadge && bot.scriptRunning) {
-        const newBadge = document.createElement('span');
-        newBadge.className = 'script-status-badge running';
-        newBadge.textContent = '▶️ Script';
-        newBadge.id = 'script-badge-' + bot.id;
-        if (nameEl && nameEl.parentNode) {
-          nameEl.parentNode.insertBefore(newBadge, nameEl.nextSibling);
-        }
-      } else if (scriptBadge && !bot.scriptRunning) {
-        scriptBadge.remove();
-      } else if (scriptBadge) {
-        scriptBadge.className = bot.scriptRunning ? 'script-status-badge running' : 'script-status-badge stopped';
-        scriptBadge.textContent = bot.scriptRunning ? '▶️ Script' : '⏹️ Script';
+      if (coordsEl && bot.x !== null) {
+        coordsEl.textContent = `X:${bot.x} Y:${bot.y} Z:${bot.z}`;
       }
 
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
 
     function updateBotStats(botData) {
-      if (!botData || !botData.id) return;
       const healthEl = document.getElementById('health-' + botData.id);
       const foodEl = document.getElementById('food-' + botData.id);
       const xpEl = document.getElementById('xp-' + botData.id);
       const posEl = document.getElementById('pos-' + botData.id);
       const coordsEl = document.getElementById('coords-' + botData.id);
-      const yawSlider = document.getElementById('yaw-' + botData.id);
-      const pitchSlider = document.getElementById('pitch-' + botData.id);
-      const yawVal = document.getElementById('yaw-val-' + botData.id);
-      const pitchVal = document.getElementById('pitch-val-' + botData.id);
 
-      if (botData.health !== null && botData.health !== undefined) {
-        if (healthEl) healthEl.textContent = Math.floor(botData.health) + '/' + (botData.maxHealth || 20);
-        if (foodEl) foodEl.textContent = Math.floor(botData.food) + '/20';
-        if (xpEl) xpEl.textContent = 'Lv.' + (botData.level || 0);
-        if (posEl) posEl.textContent = 'X:' + botData.x + ' Y:' + botData.y + ' Z:' + botData.z;
-        if (coordsEl) coordsEl.textContent = 'X:' + botData.x + ' Y:' + botData.y + ' Z:' + botData.z;
-
-        if (yawSlider && botData.yaw !== null && botData.yaw !== undefined) {
-          const yawDeg = Math.round(botData.yaw * 180 / Math.PI);
-          yawSlider.value = yawDeg;
-          if (yawVal) yawVal.textContent = yawDeg + '°';
-        }
-        if (pitchSlider && botData.pitch !== null && botData.pitch !== undefined) {
-          const pitchDeg = Math.round(botData.pitch * 180 / Math.PI);
-          pitchSlider.value = pitchDeg;
-          if (pitchVal) pitchVal.textContent = pitchDeg + '°';
-        }
+      if (botData.health !== null) {
+        if (healthEl) healthEl.textContent = `${Math.floor(botData.health)}/${botData.maxHealth || 20}`;
+        if (foodEl) foodEl.textContent = `${Math.floor(botData.food)}/20`;
+        if (xpEl) xpEl.textContent = `Lv.${botData.level || 0}`;
+        if (posEl) posEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
+        if (coordsEl) coordsEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
       } else {
         if (healthEl) healthEl.textContent = '-';
         if (foodEl) foodEl.textContent = '-';
@@ -2407,7 +2231,7 @@
 
     function updateAntiAfkButton(botId, enabled) {
       const btn = document.getElementById('afk-btn-' + botId);
-      if (btn) btn.classList.toggle('active', !!enabled);
+      if (btn) btn.classList.toggle('active', enabled);
     }
 
     function addConsoleMessage(botId, type, text, timestamp) {
@@ -2426,7 +2250,7 @@
       }
     }
 
-    // ── Script Panel ───────────────────────────────────────────────
+    // ── Script Panel ─────────────────────────────────────────
     const scriptPresets = {
       'chat-loop': `// Her 5 saniyede rastgele mesaj at
 const messages = ['Merhaba!', 'Selam', 'Naber?', 'AFK', ':)'];
@@ -2499,139 +2323,119 @@ console.log('Oto yemek aktif');`
     };
 
     function openScriptModal(botId, botName) {
-      AppState.currentScriptBotId = botId;
+      state.currentScriptBotId = botId;
       document.getElementById('script-modal-title').textContent = botName + ' - Script Panel';
-      DOM.modalScript.classList.add('active');
-      DOM.scriptEditor.focus();
+      els.modalScript.classList.add('active');
+      document.getElementById('script-editor').focus();
     }
 
-    DOM.modalScriptClose.addEventListener('click', () => {
-      DOM.modalScript.classList.remove('active');
-      AppState.currentScriptBotId = null;
+    els.modalScriptClose.addEventListener('click', () => {
+      els.modalScript.classList.remove('active');
+      state.currentScriptBotId = null;
     });
 
-    DOM.modalScript.addEventListener('click', (e) => {
-      if (e.target === DOM.modalScript) {
-        DOM.modalScript.classList.remove('active');
-        AppState.currentScriptBotId = null;
+    els.modalScript.addEventListener('click', (e) => {
+      if (e.target === els.modalScript) {
+        els.modalScript.classList.remove('active');
+        state.currentScriptBotId = null;
       }
     });
 
     document.getElementById('script-presets').addEventListener('click', (e) => {
       if (e.target.classList.contains('script-preset')) {
         const preset = e.target.dataset.preset;
-        DOM.scriptEditor.value = scriptPresets[preset] || '';
+        const editor = document.getElementById('script-editor');
+        editor.value = scriptPresets[preset] || '';
       }
     });
 
     document.getElementById('btn-run-script').addEventListener('click', () => {
-      if (!AppState.currentScriptBotId) return;
-      const script = DOM.scriptEditor.value.trim();
+      if (!state.currentScriptBotId) return;
+      const script = document.getElementById('script-editor').value.trim();
       if (!script) {
         showToast('error', 'Script boş olamaz.');
         return;
       }
       if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-        socket.emit('run-bot-script', { botId: AppState.currentScriptBotId, script });
+        socket.emit('run-bot-script', { botId: state.currentScriptBotId, script });
       } else {
-        const bot = AppState.bots.get(AppState.currentScriptBotId);
+        // Çevrimdışı mod - scripti konsolda göster
+        const bot = state.bots.get(state.currentScriptBotId);
         if (bot) {
           const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          addConsoleMessage(AppState.currentScriptBotId, 'system', 'Script çalıştırıldı (Çevrimdışı mod - demo):', now);
-          addConsoleMessage(AppState.currentScriptBotId, 'info', script.substring(0, 200) + (script.length > 200 ? '...' : ''), now);
+          addConsoleMessage(state.currentScriptBotId, 'system', 'Script çalıştırıldı (Çevrimdışı mod - sadece demo):', now);
+          addConsoleMessage(state.currentScriptBotId, 'info', script.substring(0, 200) + (script.length > 200 ? '...' : ''), now);
           showToast('success', 'Script çalıştırıldı (Çevrimdışı mod - demo)');
         }
       }
-      updateScriptStatus('running');
       showToast('success', 'Script çalıştırılıyor...');
     });
 
-    document.getElementById('btn-stop-script').addEventListener('click', () => {
-      if (!AppState.currentScriptBotId) return;
-      if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-        socket.emit('stop-bot-script', AppState.currentScriptBotId);
-      } else {
-        showToast('success', 'Script durduruldu (Çevrimdışı mod)');
-      }
-      updateScriptStatus('stopped');
-    });
-
     document.getElementById('btn-clear-script').addEventListener('click', () => {
-      DOM.scriptEditor.value = '';
+      document.getElementById('script-editor').value = '';
     });
 
-    function updateScriptStatus(status) {
-      if (!DOM.scriptStatusText) return;
-      if (status === 'running') {
-        DOM.scriptStatusText.textContent = '▶️ Çalışıyor...';
-        DOM.scriptStatusText.style.color = 'var(--accent)';
-      } else {
-        DOM.scriptStatusText.textContent = '⏹️ Durduruldu';
-        DOM.scriptStatusText.style.color = 'var(--text-muted)';
-      }
-    }
-
-    // ── Modal: Bot Ekle ──────────────────────────────────────────
+    // ── Modal: Bot Ekle ────────────────────────────────────────
     function openAddBotModal(server) {
       document.getElementById('modal-title').textContent = 'Bot Ekle';
-      DOM.modalServerIp.value = server.serverIp;
-      DOM.modalServerIp.readOnly = true;
-      DOM.modalServerPort.value = server.serverPort;
-      DOM.modalServerPort.readOnly = true;
-      DOM.modalBotVersion.value = server.version;
-      DOM.modalProxy.value = server.hasProxy ? (server.proxy || '') : '';
-      DOM.modalBotNames.value = '';
-      DOM.modalAddBot.classList.add('active');
+      els.modalServerIp.value = server.serverIp;
+      els.modalServerIp.readOnly = true;
+      els.modalServerPort.value = server.serverPort;
+      els.modalServerPort.readOnly = true;
+      els.modalBotVersion.value = server.version;
+      els.modalProxy.value = server.hasProxy ? (server.proxy || '') : '';
+      els.modalBotNames.value = '';
+      els.modalAddBot.classList.add('active');
     }
 
     function openAddServerModal() {
       document.getElementById('modal-title').textContent = 'Yeni Sunucu Ekle';
-      DOM.modalServerIp.value = '';
-      DOM.modalServerIp.readOnly = false;
-      DOM.modalServerPort.value = '25565';
-      DOM.modalServerPort.readOnly = false;
-      DOM.modalBotVersion.value = '1.20.1';
-      DOM.modalProxy.value = '';
-      DOM.modalBotNames.value = '';
-      DOM.modalAddBot.classList.add('active');
-      setTimeout(() => DOM.modalServerIp.focus(), 100);
+      els.modalServerIp.value = '';
+      els.modalServerIp.readOnly = false;
+      els.modalServerPort.value = '25565';
+      els.modalServerPort.readOnly = false;
+      els.modalBotVersion.value = '1.20.1';
+      els.modalProxy.value = '';
+      els.modalBotNames.value = '';
+      els.modalAddBot.classList.add('active');
+      setTimeout(() => els.modalServerIp.focus(), 100);
     }
 
     document.getElementById('btn-new-server').addEventListener('click', openAddServerModal);
     document.getElementById('btn-new-server-empty').addEventListener('click', openAddServerModal);
 
-    DOM.btnPanelAddBot.addEventListener('click', () => {
-      const server = AppState.servers.get(AppState.currentServerKey);
+    els.btnPanelAddBot.addEventListener('click', () => {
+      const server = state.servers.get(state.currentServerKey);
       if (server) openAddBotModal(server);
     });
 
-    DOM.modalAddClose.addEventListener('click', () => {
-      DOM.modalAddBot.classList.remove('active');
+    els.modalAddClose.addEventListener('click', () => {
+      els.modalAddBot.classList.remove('active');
     });
 
-    DOM.modalAddBot.addEventListener('click', (e) => {
-      if (e.target === DOM.modalAddBot) DOM.modalAddBot.classList.remove('active');
+    els.modalAddBot.addEventListener('click', (e) => {
+      if (e.target === els.modalAddBot) els.modalAddBot.classList.remove('active');
     });
 
-    DOM.btnModalAdd.addEventListener('click', () => {
-      const ip = DOM.modalServerIp.value.trim();
-      const port = DOM.modalServerPort.value.trim();
-      const version = DOM.modalBotVersion.value;
-      const proxy = DOM.modalProxy.value.trim();
-      const namesText = DOM.modalBotNames.value.trim();
+    els.btnModalAdd.addEventListener('click', () => {
+      const ip = els.modalServerIp.value.trim();
+      const port = els.modalServerPort.value.trim();
+      const version = els.modalBotVersion.value;
+      const proxy = els.modalProxy.value.trim();
+      const namesText = els.modalBotNames.value.trim();
 
       if (!ip) {
         showToast('error', 'Sunucu IP girin.');
         return;
       }
+
       if (!namesText) {
         showToast('error', 'En az bir bot adı girin.');
         return;
       }
 
-      const botNames = namesText.split(/
-?
-/).map(n => n.trim()).filter(n => n);
+      const botNames = namesText.split(/\r?\n/).map(n => n.trim()).filter(n => n);
+
       if (botNames.length === 0) {
         showToast('error', 'Geçerli bot adı bulunamadı.');
         return;
@@ -2641,97 +2445,111 @@ console.log('Oto yemek aktif');`
         socket.emit('add-bots-batch', { serverIp: ip, port, version, proxy, botNames });
         showToast('success', botNames.length + ' bot ekleniyor...');
       } else {
+        // Çevrimdışı mod - botları yerel olarak ekle (demo)
         addBotsOffline(ip, port, version, proxy, botNames);
         showToast('success', botNames.length + ' bot eklendi (Çevrimdışı mod)');
       }
-      DOM.modalAddBot.classList.remove('active');
+      els.modalAddBot.classList.remove('active');
     });
 
-    // ── Modal: Toplu Mesaj ───────────────────────────────────────
-    DOM.btnPanelBroadcast.addEventListener('click', () => {
-      DOM.modalBroadcast.classList.add('active');
-      DOM.broadcastMessage.value = '';
-      DOM.broadcastMessage.focus();
+    // ── Modal: Toplu Mesaj ───────────────────────────────────
+    els.btnPanelBroadcast.addEventListener('click', () => {
+      els.modalBroadcast.classList.add('active');
+      els.broadcastMessage.value = '';
+      els.broadcastMessage.focus();
     });
 
-    DOM.modalBroadcastClose.addEventListener('click', () => {
-      DOM.modalBroadcast.classList.remove('active');
+    els.modalBroadcastClose.addEventListener('click', () => {
+      els.modalBroadcast.classList.remove('active');
     });
 
-    DOM.modalBroadcast.addEventListener('click', (e) => {
-      if (e.target === DOM.modalBroadcast) DOM.modalBroadcast.classList.remove('active');
+    els.modalBroadcast.addEventListener('click', (e) => {
+      if (e.target === els.modalBroadcast) els.modalBroadcast.classList.remove('active');
     });
 
-    DOM.btnBroadcastSend.addEventListener('click', () => {
-      const msg = DOM.broadcastMessage.value.trim();
+    els.btnBroadcastSend.addEventListener('click', () => {
+      const msg = els.broadcastMessage.value.trim();
       if (!msg) return;
 
       if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-        socket.emit('broadcast-message', { serverKey: AppState.currentServerKey, message: msg });
+        socket.emit('broadcast-message', { serverKey: state.currentServerKey, message: msg });
       } else {
-        const server = AppState.servers.get(AppState.currentServerKey);
+        // Çevrimdışı mod - tüm botlara yerel mesaj
+        const server = state.servers.get(state.currentServerKey);
         if (server) {
           const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           (server.bots || []).forEach(b => {
-            addConsoleMessage(b.id, 'self', '[Toplu] ' + msg, now);
-            saveMessageToStorage(b.id, 'self', '[Toplu] ' + msg, now);
+            addConsoleMessage(b.id, 'self', `[Toplu] ${msg}`, now);
+            saveMessageToStorage(b.id, 'self', `[Toplu] ${msg}`, now);
           });
           showToast('success', 'Toplu mesaj gönderildi (Çevrimdışı mod)');
         }
       }
-      DOM.modalBroadcast.classList.remove('active');
+      els.modalBroadcast.classList.remove('active');
     });
 
-    DOM.broadcastMessage.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') DOM.btnBroadcastSend.click();
+    els.broadcastMessage.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') els.btnBroadcastSend.click();
     });
 
-    // ── Panel: Tüm Anti-AFK ────────────────────────────────────
-    DOM.btnPanelAntiAfk.addEventListener('click', () => {
-      AppState.antiAfkAllState = !AppState.antiAfkAllState;
-      DOM.btnPanelAntiAfk.classList.toggle('active', AppState.antiAfkAllState);
+    // ── Panel: Tüm Anti-AFK ──────────────────────────────────
+    els.btnPanelAntiAfk.addEventListener('click', () => {
+      state.antiAfkAllState = !state.antiAfkAllState;
+      els.btnPanelAntiAfk.classList.toggle('active', state.antiAfkAllState);
       if (!isOfflineMode && socket && typeof socket.emit === 'function') {
         socket.emit('toggle-all-antiafk', { 
-          serverKey: AppState.currentServerKey, 
-          enabled: AppState.antiAfkAllState 
+          serverKey: state.currentServerKey, 
+          enabled: state.antiAfkAllState 
         });
       } else {
-        const server = AppState.servers.get(AppState.currentServerKey);
+        // Çevrimdışı mod
+        const server = state.servers.get(state.currentServerKey);
         if (server) {
           const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           (server.bots || []).forEach(b => {
-            b.antiAfkEnabled = AppState.antiAfkAllState;
-            updateAntiAfkButton(b.id, AppState.antiAfkAllState);
-            addConsoleMessage(b.id, 'system', 'Anti-AFK ' + (AppState.antiAfkAllState ? 'aktif' : 'devre dışı') + ' (Toplu - Çevrimdışı)', now);
+            b.antiAfkEnabled = state.antiAfkAllState;
+            updateAntiAfkButton(b.id, state.antiAfkAllState);
+            addConsoleMessage(b.id, 'system', `Anti-AFK ${state.antiAfkAllState ? 'aktif' : 'devre dışı'} (Toplu - Çevrimdışı)`, now);
           });
-          showToast('success', 'Tüm botlarda Anti-AFK ' + (AppState.antiAfkAllState ? 'aktif' : 'devre dışı') + ' (Çevrimdışı mod)');
+          showToast('success', `Tüm botlarda Anti-AFK ${state.antiAfkAllState ? 'aktif' : 'devre dışı'} (Çevrimdışı mod)`);
         }
       }
     });
 
     // ── Panel: Tümünü Çıkar ────────────────────────────────────
-    DOM.btnPanelRemoveAll.addEventListener('click', () => {
-      const server = AppState.servers.get(AppState.currentServerKey);
+    els.btnPanelRemoveAll.addEventListener('click', () => {
+      const server = state.servers.get(state.currentServerKey);
       if (!server) return;
 
       if (confirm('"' + server.serverIp + '" sunucusundaki TÜM botları çıkarmak istiyor musun?')) {
         if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-          socket.emit('remove-server-bots', AppState.currentServerKey);
+          socket.emit('remove-server-bots', state.currentServerKey);
         } else {
-          offlineRemoveServerBots(AppState.currentServerKey);
+          // Çevrimdışı mod
+          const server = state.servers.get(state.currentServerKey);
+          if (server) {
+            (server.bots || []).forEach(b => {
+              state.bots.delete(b.id);
+              state.consoles.delete(b.id);
+              clearStorageForBot(b.id);
+            });
+            updateServersFromBots();
+            renderServerBrowser();
+            showToast('success', 'Tüm botlar çıkarıldı (Çevrimdışı mod)');
+          }
         }
         showPage('browser');
       }
     });
 
-    // ── Modal: Oyuncu Listesi ────────────────────────────────────
+    // ── Modal: Oyuncu Listesi ──────────────────────────────────
     function showPlayerList(players) {
       if (!players || players.length === 0) {
-        DOM.playerList.innerHTML = '<li class="player-item">Çevrimiçi oyuncu yok.</li>';
+        els.playerList.innerHTML = '<li class="player-item">Çevrimiçi oyuncu yok.</li>';
         return;
       }
 
-      DOM.playerList.innerHTML = players.map(p => {
+      els.playerList.innerHTML = players.map(p => {
         let pingClass = 'good';
         if (p.ping > 100) pingClass = 'medium';
         if (p.ping > 300) pingClass = 'bad';
@@ -2744,24 +2562,24 @@ console.log('Oto yemek aktif');`
       }).join('');
     }
 
-    DOM.modalPlayersClose.addEventListener('click', () => {
-      DOM.modalPlayers.classList.remove('active');
-      AppState.currentPlayerListBot = null;
+    els.modalPlayersClose.addEventListener('click', () => {
+      els.modalPlayers.classList.remove('active');
+      state.currentPlayerListBot = null;
     });
 
-    DOM.modalPlayers.addEventListener('click', (e) => {
-      if (e.target === DOM.modalPlayers) {
-        DOM.modalPlayers.classList.remove('active');
-        AppState.currentPlayerListBot = null;
+    els.modalPlayers.addEventListener('click', (e) => {
+      if (e.target === els.modalPlayers) {
+        els.modalPlayers.classList.remove('active');
+        state.currentPlayerListBot = null;
       }
     });
 
-    // ── Toast ────────────────────────────────────────────────────
+    // ── Toast ──────────────────────────────────────────────────
     function showToast(type, text) {
       const toast = document.createElement('div');
       toast.className = 'toast ' + type;
       toast.textContent = text;
-      DOM.toastContainer.appendChild(toast);
+      els.toastContainer.appendChild(toast);
 
       setTimeout(() => {
         toast.style.opacity = '0';
@@ -2770,17 +2588,16 @@ console.log('Oto yemek aktif');`
       }, 4500);
     }
 
-    // ── Yardımcı ─────────────────────────────────────────────────
+    // ── Yardımcı ───────────────────────────────────────────────
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
 
-    // ── Başlangıç ────────────────────────────────────────────────
-    initSocket();
-    setupSocketListeners();
+    // ── Başlangıç ──────────────────────────────────────────────
     renderServerBrowser();
   </script>
+
 </body>
 </html>
