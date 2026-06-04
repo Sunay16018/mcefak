@@ -46,7 +46,7 @@ io.on('connection', (socket) => {
   console.log(`[Socket] İstemci bağlandı: ${socket.id}`);
 
   // Mevcut botları ve RAM kullanımını gönder
-  socket.emit('ram-usage', botManager.getRamUsage());
+  const ramData = botManager.getRamUsage(); io.emit('ram-usage', ramData);
   socket.emit('bot-update', botManager.getAllBots());
 
   // ── Bot Ekle ────────────────────────────────────────────────
