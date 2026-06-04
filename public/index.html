@@ -813,6 +813,85 @@
     }
 
     .move-btn.wide { width: 84px; font-size: 0.75rem; }
+    .move-btn.dig { 
+      width: 120px; 
+      font-size: 0.75rem; 
+      background: linear-gradient(135deg, #8B4513, #A0522D);
+      border-color: #8B4513;
+      color: white;
+    }
+    .move-btn.dig:hover {
+      background: linear-gradient(135deg, #A0522D, #CD853F);
+      border-color: #CD853F;
+    }
+    .move-btn.dig:active, .move-btn.dig.active {
+      background: rgba(139, 69, 19, 0.4);
+      border-color: #FFD700;
+      color: #FFD700;
+    }
+
+    .look-controls {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .look-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .look-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      min-width: 50px;
+      text-transform: uppercase;
+    }
+
+    .look-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      outline: none;
+      border: 1px solid var(--border);
+    }
+
+    .look-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--bg-primary);
+    }
+
+    .look-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--bg-primary);
+    }
+
+    .look-value {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 700;
+      font-family: monospace;
+      min-width: 50px;
+      text-align: right;
+    }
 
     .move-label {
       font-size: 0.6rem;
@@ -820,6 +899,26 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-top: 3px;
+    }
+
+    .script-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+    .script-status-badge.running {
+      background: rgba(88, 166, 255, 0.2);
+      color: var(--accent);
+      animation: pulse 1s infinite;
+    }
+    .script-status-badge.stopped {
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
     }
 
     .bot-console {
@@ -1324,9 +1423,15 @@
           <button class="btn-script" id="btn-run-script">
             <span>▶️</span> Çalıştır
           </button>
+          <button class="btn-script" id="btn-stop-script" style="background: linear-gradient(135deg, #f85149, #da3633);">
+            <span>⏹️</span> Durdur
+          </button>
           <button class="btn-script btn-script-clear" id="btn-clear-script">
             <span>🗑️</span> Temizle
           </button>
+        </div>
+        <div id="script-status-display" style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+          Script durumu: <span id="script-status-text">Bekliyor</span>
         </div>
       </div>
     </div>
@@ -2020,6 +2125,18 @@
             <span class="stat-value" id="pos-${bot.id}" style="font-family:monospace;font-size:0.7rem;">-</span>
           </div>
         </div>
+        <div class="look-controls" id="look-${bot.id}">
+          <div class="look-row">
+            <span class="look-label">Yatay</span>
+            <input type="range" class="look-slider" id="yaw-${bot.id}" min="-180" max="180" value="0" data-bot="${bot.id}">
+            <span class="look-value" id="yaw-val-${bot.id}">0°</span>
+          </div>
+          <div class="look-row">
+            <span class="look-label">Dikey</span>
+            <input type="range" class="look-slider" id="pitch-${bot.id}" min="-90" max="90" value="0" data-bot="${bot.id}">
+            <span class="look-value" id="pitch-val-${bot.id}">0°</span>
+          </div>
+        </div>
         <div class="movement-controls" id="movement-${bot.id}">
           <div class="movement-row">
             <button class="move-btn" data-move="forward" data-bot="${bot.id}">W</button>
@@ -2037,6 +2154,7 @@
           <div class="movement-row">
             <button class="move-btn wide" data-move="swing" data-bot="${bot.id}">✋ Sallan</button>
             <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
+            <button class="move-btn wide dig" data-move="dig" data-bot="${bot.id}">⛏️ Kaz</button>
           </div>
           <div class="move-label">Basılı Tut = Sürekli Çalışır | Bırak = Durur</div>
         </div>
@@ -2118,6 +2236,34 @@
       msgInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendBtn.click();
       });
+
+      // ── Bakış Yönü Kontrolleri ────────────────────────────
+      const yawSlider = card.querySelector('#yaw-' + bot.id);
+      const pitchSlider = card.querySelector('#pitch-' + bot.id);
+      const yawVal = card.querySelector('#yaw-val-' + bot.id);
+      const pitchVal = card.querySelector('#pitch-val-' + bot.id);
+
+      if (yawSlider) {
+        yawSlider.addEventListener('input', (e) => {
+          const deg = parseInt(e.target.value);
+          yawVal.textContent = deg + '°';
+          const rad = deg * Math.PI / 180;
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: bot.id, action: 'lookYaw', state: rad });
+          }
+        });
+      }
+
+      if (pitchSlider) {
+        pitchSlider.addEventListener('input', (e) => {
+          const deg = parseInt(e.target.value);
+          pitchVal.textContent = deg + '°';
+          const rad = deg * Math.PI / 180;
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: bot.id, action: 'lookPitch', state: rad });
+          }
+        });
+      }
 
       // ── Hareket Kontrolleri ────────────────────────────────
       const moveButtons = card.querySelectorAll('.move-btn');
@@ -2205,6 +2351,21 @@
         coordsEl.textContent = `X:${bot.x} Y:${bot.y} Z:${bot.z}`;
       }
 
+      // Script durumu rozeti
+      const scriptBadge = card.querySelector('.script-status-badge');
+      if (!scriptBadge && bot.scriptRunning) {
+        const newBadge = document.createElement('span');
+        newBadge.className = 'script-status-badge running';
+        newBadge.textContent = '▶️ Script';
+        newBadge.id = 'script-badge-' + bot.id;
+        nameEl.parentNode.insertBefore(newBadge, nameEl.nextSibling);
+      } else if (scriptBadge && !bot.scriptRunning) {
+        scriptBadge.remove();
+      } else if (scriptBadge) {
+        scriptBadge.className = bot.scriptRunning ? 'script-status-badge running' : 'script-status-badge stopped';
+        scriptBadge.textContent = bot.scriptRunning ? '▶️ Script' : '⏹️ Script';
+      }
+
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
 
@@ -2214,6 +2375,10 @@
       const xpEl = document.getElementById('xp-' + botData.id);
       const posEl = document.getElementById('pos-' + botData.id);
       const coordsEl = document.getElementById('coords-' + botData.id);
+      const yawSlider = document.getElementById('yaw-' + botData.id);
+      const pitchSlider = document.getElementById('pitch-' + botData.id);
+      const yawVal = document.getElementById('yaw-val-' + botData.id);
+      const pitchVal = document.getElementById('pitch-val-' + botData.id);
 
       if (botData.health !== null) {
         if (healthEl) healthEl.textContent = `${Math.floor(botData.health)}/${botData.maxHealth || 20}`;
@@ -2221,6 +2386,18 @@
         if (xpEl) xpEl.textContent = `Lv.${botData.level || 0}`;
         if (posEl) posEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
         if (coordsEl) coordsEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
+
+        // Bakış yönü slider'larını güncelle
+        if (yawSlider && botData.yaw !== null) {
+          const yawDeg = Math.round(botData.yaw * 180 / Math.PI);
+          yawSlider.value = yawDeg;
+          if (yawVal) yawVal.textContent = yawDeg + '°';
+        }
+        if (pitchSlider && botData.pitch !== null) {
+          const pitchDeg = Math.round(botData.pitch * 180 / Math.PI);
+          pitchSlider.value = pitchDeg;
+          if (pitchVal) pitchVal.textContent = pitchDeg + '°';
+        }
       } else {
         if (healthEl) healthEl.textContent = '-';
         if (foodEl) foodEl.textContent = '-';
@@ -2368,12 +2545,44 @@ console.log('Oto yemek aktif');`
           showToast('success', 'Script çalıştırıldı (Çevrimdışı mod - demo)');
         }
       }
+      updateScriptStatus('running');
       showToast('success', 'Script çalıştırılıyor...');
+    });
+
+    document.getElementById('btn-stop-script').addEventListener('click', () => {
+      if (!state.currentScriptBotId) return;
+      if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+        socket.emit('stop-bot-script', state.currentScriptBotId);
+      } else {
+        showToast('success', 'Script durduruldu (Çevrimdışı mod)');
+      }
+      updateScriptStatus('stopped');
     });
 
     document.getElementById('btn-clear-script').addEventListener('click', () => {
       document.getElementById('script-editor').value = '';
     });
+
+    function updateScriptStatus(status) {
+      const statusText = document.getElementById('script-status-text');
+      if (!statusText) return;
+      if (status === 'running') {
+        statusText.textContent = '▶️ Çalışıyor...';
+        statusText.style.color = 'var(--accent)';
+      } else {
+        statusText.textContent = '⏹️ Durduruldu';
+        statusText.style.color = 'var(--text-muted)';
+      }
+    }
+
+    // Script durumu socket dinleyicisi
+    if (!isOfflineMode && socket && typeof socket.on === 'function') {
+      socket.on('script-status', ({ botId, isRunning }) => {
+        if (state.currentScriptBotId === botId) {
+          updateScriptStatus(isRunning ? 'running' : 'stopped');
+        }
+      });
+    }
 
     // ── Modal: Bot Ekle ────────────────────────────────────────
     function openAddBotModal(server) {
