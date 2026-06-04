@@ -1804,24 +1804,48 @@
           }
           return;
         }
+
+        // Ana sunucu bilgisi API çağrısı
         const response = await fetch(`https://api.mcsrvstat.us/3/${server.serverIp}:${server.serverPort}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
           }).catch(() => null);
+
         if (!response) {
           console.log('[API] Sunucu bilgisi alınamadı (ağ hatası)');
           renderServerBrowser();
           return;
         }
+
         const data = await response.json();
 
         if (data && data.online) {
+          // MOTD
           server.motd = (data.motd && data.motd.clean && data.motd.clean[0]) || 
-                         (data.motd && data.motd.raw && data.motd.raw[0]) || '';
+                         (data.motd && data.motd.raw && data.motd.raw[0]) || 
+                         (data.motd && data.motd.html && data.motd.html[0]) || '';
+
+          // Oyuncu sayısı
           server.onlinePlayers = (data.players && data.players.online) || 0;
           server.maxPlayers = (data.players && data.players.max) || 0;
-          if (data.version) server.version = (typeof data.version === 'string') ? data.version : (data.version.name_clean || data.version.name || server.version);
-          if (data.icon) server.icon = data.icon;
+
+          // Versiyon
+          if (data.version) {
+            server.version = (typeof data.version === 'string') ? data.version : (data.version.name_clean || data.version.name || data.version.raw || server.version);
+          }
+
+          // İkon - API base64 olarak döner: data:image/png;base64,...
+          console.log('[API] Icon data:', data.icon ? data.icon.substring(0, 50) + '...' : 'null');
+          if (data.icon && typeof data.icon === 'string') {
+            if (data.icon.startsWith('data:image')) {
+              server.icon = data.icon;
+              console.log('[API] Icon set from data URI');
+            } else {
+              // Eğer sadece base64 string ise, data URI formatına çevir
+              server.icon = 'data:image/png;base64,' + data.icon;
+              console.log('[API] Icon converted to data URI');
+            }
+          }
         }
 
         renderServerBrowser();
@@ -1898,9 +1922,11 @@
         connecting: 'var(--connecting)'
       }[server.status] || 'var(--offline)';
 
-      const iconHtml = server.icon 
-        ? '<img src="' + server.icon + '" alt="icon">' 
-        : '<span class="icon-placeholder">🖥️</span>';
+      const iconHtml = server.icon && server.icon.startsWith('data:image')
+        ? '<img src="' + server.icon + '" alt="icon">'
+        : (server.icon 
+            ? '<img src="' + server.icon + '" alt="icon" onerror="this.parentElement.innerHTML='<span class=icon-placeholder>🖥️</span>'">' 
+            : '<span class="icon-placeholder">🖥️</span>');
 
       card.innerHTML = `
         <div class="server-icon">${iconHtml}</div>
@@ -1983,8 +2009,14 @@
 
     function updateServerCard(card, server) {
       const iconEl = card.querySelector('.server-icon');
-      if (iconEl && server.icon) {
-        iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon">';
+      if (iconEl) {
+        if (server.icon && server.icon.startsWith('data:image')) {
+          iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon">';
+        } else if (server.icon) {
+          iconEl.innerHTML = '<img src="' + server.icon + '" alt="icon" onerror="this.parentElement.innerHTML='<span class=icon-placeholder>🖥️</span>'">';
+        } else {
+          iconEl.innerHTML = '<span class="icon-placeholder">🖥️</span>';
+        }
       }
 
       card.className = 'server-card has-' + server.status;
@@ -2156,7 +2188,7 @@
             <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
             <button class="move-btn wide dig" data-move="dig" data-bot="${bot.id}">⛏️ Kaz</button>
           </div>
-          <div class="move-label">Basılı Tut = Sürekli Çalışır | Bırak = Durur</div>
+          <div class="move-label">WASD: Basılı Tut | Kazma: Toggle (Tıkla=Aç/Kapat)</div>
         </div>
         <div class="bot-console" id="console-${bot.id}"></div>
         <div class="bot-controls">
@@ -2269,22 +2301,50 @@
       const moveButtons = card.querySelectorAll('.move-btn');
       moveButtons.forEach(btn => {
         const moveAction = btn.dataset.move;
+
+        // KAZMA butonu için toggle mantığı (1 tık = sürekli kaz, 1 tık = dur)
+        if (moveAction === 'dig') {
+          btn.addEventListener('click', (e) => {
+            if (e) e.preventDefault();
+            const isActive = btn.classList.contains('active');
+
+            if (!isActive) {
+              // Kazmayı başlat
+              btn.classList.add('active');
+              btn.style.background = 'rgba(139, 69, 19, 0.4)';
+              btn.style.borderColor = '#FFD700';
+              btn.style.color = '#FFD700';
+              if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+                socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
+              }
+            } else {
+              // Kazmayı durdur
+              btn.classList.remove('active');
+              btn.style.background = '';
+              btn.style.borderColor = '';
+              btn.style.color = '';
+              if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+                socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
+              }
+            }
+          });
+          return; // Diğer event listener'ları ekleme
+        }
+
+        // Diğer butonlar için basılı tutma mantığı (WASD, zıpla, vb.)
         let holdInterval = null;
         let isHolding = false;
 
-        // Basılı tutma başladığında
         const startHold = (e) => {
           if (e) e.preventDefault();
           if (isHolding) return;
           isHolding = true;
           btn.classList.add('active');
 
-          // İlk eylem hemen gönder
           if (!isOfflineMode && socket && typeof socket.emit === 'function') {
             socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
           }
 
-          // Basılı tutulduğu sürece her 100ms'de bir tekrarla (sürekli hareket)
           holdInterval = setInterval(() => {
             if (!isHolding) return;
             if (!isOfflineMode && socket && typeof socket.emit === 'function') {
@@ -2293,7 +2353,6 @@
           }, 100);
         };
 
-        // Basılı tutma bittiğinde
         const endHold = (e) => {
           if (e) e.preventDefault();
           if (!isHolding) return;
@@ -2303,20 +2362,16 @@
             clearInterval(holdInterval);
             holdInterval = null;
           }
-          // Durma sinyali gönder
           if (!isOfflineMode && socket && typeof socket.emit === 'function') {
             socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
           }
         };
 
-        // Mouse events
         btn.addEventListener('mousedown', startHold);
         btn.addEventListener('mouseup', endHold);
         btn.addEventListener('mouseleave', () => {
           if (isHolding) endHold();
         });
-
-        // Touch events (mobile)
         btn.addEventListener('touchstart', startHold, { passive: false });
         btn.addEventListener('touchend', endHold, { passive: false });
         btn.addEventListener('touchcancel', endHold, { passive: false });
