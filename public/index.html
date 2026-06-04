@@ -400,6 +400,8 @@
       animation: modalSlide 0.25s ease;
     }
 
+    .modal.wide { max-width: 700px; }
+
     @keyframes modalSlide {
       from { opacity: 0; transform: translateY(-20px) scale(0.96); }
       to { opacity: 1; transform: translateY(0) scale(1); }
@@ -619,7 +621,7 @@
 
     .bots-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
       gap: 16px;
     }
 
@@ -724,8 +726,95 @@
       border-color: var(--accent);
     }
 
+    /* ── Bot Stats Bar ──────────────────────────────────────── */
+    .bot-stats {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .bot-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .bot-stat .stat-icon { font-size: 0.85rem; }
+    .bot-stat .stat-value { font-weight: 700; color: var(--accent); font-size: 0.78rem; }
+    .bot-stat .stat-label { color: var(--text-muted); font-size: 0.68rem; }
+    .bot-stat.health .stat-value { color: var(--error); }
+    .bot-stat.food .stat-value { color: var(--warning); }
+    .bot-stat.xp .stat-value { color: #a371f7; }
+
+    /* ── Movement Controls ──────────────────────────────────── */
+    .movement-controls {
+      padding: 10px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .movement-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .move-btn {
+      width: 40px;
+      height: 34px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .move-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+
+    .move-btn:active, .move-btn.active {
+      background: rgba(88, 166, 255, 0.2);
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: scale(0.95);
+    }
+
+    .move-btn.wide { width: 84px; font-size: 0.75rem; }
+
+    .move-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+    }
+
     .bot-console {
-      height: 200px;
+      height: 180px;
       overflow-y: auto;
       padding: 12px 16px;
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -792,6 +881,101 @@
     }
 
     .btn-send:hover { background: var(--accent-hover); }
+
+    /* ── Script Panel ─────────────────────────────────────── */
+    .script-panel {
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .script-panel.active { display: block; }
+
+    .script-editor {
+      width: 100%;
+      min-height: 120px;
+      background: #0a0c10;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .script-editor:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .script-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-script {
+      flex: 1;
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-script:hover {
+      background: linear-gradient(135deg, #2ea043, #3fb950);
+      transform: translateY(-1px);
+    }
+
+    .btn-script-clear {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-script-clear:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .script-presets {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .script-preset {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .script-preset:hover {
+      background: var(--bg-hover);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
 
     .player-list {
       list-style: none;
@@ -934,194 +1118,6 @@
 
       .bots-grid { grid-template-columns: 1fr; }
     }
-  
-
-    /* ── Bot Stats Bar ──────────────────────────────────────── */
-    .bot-stats {
-      padding: 8px 16px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-      font-size: 0.78rem;
-    }
-
-    .bot-stat {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg-tertiary);
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-    }
-
-    .bot-stat .stat-icon { font-size: 0.9rem; }
-    .bot-stat .stat-value { font-weight: 700; color: var(--accent); }
-    .bot-stat .stat-label { color: var(--text-muted); font-size: 0.7rem; }
-
-    .bot-stat.health .stat-value { color: var(--error); }
-    .bot-stat.food .stat-value { color: var(--warning); }
-    .bot-stat.xp .stat-value { color: #a371f7; }
-
-    /* ── Movement Controls ──────────────────────────────────── */
-    .movement-controls {
-      padding: 12px 16px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .movement-row {
-      display: flex;
-      gap: 4px;
-      justify-content: center;
-    }
-
-    .move-btn {
-      width: 42px;
-      height: 36px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-    }
-
-    .move-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-      border-color: var(--border-hover);
-    }
-
-    .move-btn:active, .move-btn.active {
-      background: rgba(88, 166, 255, 0.2);
-      color: var(--accent);
-      border-color: var(--accent);
-      transform: scale(0.95);
-    }
-
-    .move-btn.wide { width: 90px; }
-
-    .move-label {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 4px;
-    }
-
-    /* ── Script Panel ─────────────────────────────────────── */
-    .script-panel {
-      padding: 12px 16px;
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border);
-      display: none;
-    }
-
-    .script-panel.active { display: block; }
-
-    .script-editor {
-      width: 100%;
-      min-height: 120px;
-      background: #0a0c10;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      color: var(--text-primary);
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-      font-size: 0.8rem;
-      line-height: 1.5;
-      resize: vertical;
-      outline: none;
-      transition: var(--transition);
-    }
-
-    .script-editor:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
-    }
-
-    .script-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .btn-script {
-      flex: 1;
-      background: linear-gradient(135deg, #238636, #2ea043);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 8px 14px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .btn-script:hover {
-      background: linear-gradient(135deg, #2ea043, #3fb950);
-      transform: translateY(-1px);
-    }
-
-    .btn-script-clear {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-script-clear:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-
-    .script-presets {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-
-    .script-preset {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .script-preset:hover {
-      background: var(--bg-hover);
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .bot-card.expanded .bot-console {
-      height: 140px;
-    }
-
   </style>
 </head>
 <body>
@@ -1293,6 +1289,37 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-script">
+    <div class="modal wide">
+      <div class="modal-header">
+        <h3><span>📜</span> <span id="script-modal-title">Bot Script</span></h3>
+        <button class="modal-close" id="modal-script-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="script-presets" id="script-presets">
+          <button class="script-preset" data-preset="chat-loop">💬 Mesaj Döngüsü</button>
+          <button class="script-preset" data-preset="auto-chat">🤖 Oto Chat</button>
+          <button class="script-preset" data-preset="look-around">👀 Etrafına Bak</button>
+          <button class="script-preset" data-preset="spam-click">⚔️ Spam Tıkla</button>
+          <button class="script-preset" data-preset="follow-player">🏃 Oyuncu Takip</button>
+          <button class="script-preset" data-preset="auto-eat">🍖 Oto Yemek Ye</button>
+        </div>
+        <div class="form-group">
+          <label>JavaScript Kodu (bot değişkeni hazır)</label>
+          <textarea class="script-editor" id="script-editor" placeholder="// bot.chat('Merhaba!');&#10;// bot.swingArm('right');&#10;// console.log(bot.entity.position);&#10;&#10;// Örnek: Her 3 saniyede mesaj at&#10;setInterval(() => {&#10;  bot.chat('Merhaba dünya!');&#10;}, 3000);"></textarea>
+        </div>
+        <div class="script-actions">
+          <button class="btn-script" id="btn-run-script">
+            <span>▶️</span> Çalıştır
+          </button>
+          <button class="btn-script btn-script-clear" id="btn-clear-script">
+            <span>🗑️</span> Temizle
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
   <script>
@@ -1309,6 +1336,7 @@
       servers: new Map(),
       currentServerKey: null,
       currentPlayerListBot: null,
+      currentScriptBotId: null,
       antiAfkAllState: false
     };
 
@@ -1350,7 +1378,9 @@
       btnBroadcastSend: document.getElementById('btn-broadcast-send'),
       modalPlayers: document.getElementById('modal-players'),
       modalPlayersClose: document.getElementById('modal-players-close'),
-      playerList: document.getElementById('player-list')
+      playerList: document.getElementById('player-list'),
+      modalScript: document.getElementById('modal-script'),
+      modalScriptClose: document.getElementById('modal-script-close')
     };
 
     // ── LocalStorage Sohbet Geçmişi ─────────────────────────────
@@ -1400,7 +1430,6 @@
     // ── Socket Olayları ────────────────────────────────────────
     socket.on('connect', () => {
       console.log('[Socket] Bağlandı');
-      // Bağlandığında tüm botların sohbet geçmişini yükle
       setTimeout(() => {
         for (const [botId] of state.bots) {
           loadMessagesFromStorage(botId);
@@ -1430,7 +1459,6 @@
 
       for (const bot of bots) {
         const existing = state.bots.get(bot.id);
-        // Merge stats from existing if available
         if (existing) {
           Object.assign(bot, {
             x: existing.x, y: existing.y, z: existing.z,
@@ -1455,6 +1483,13 @@
       }
     });
 
+    socket.on('bot-stats-update', (bots) => {
+      for (const bot of bots) {
+        state.bots.set(bot.id, { ...state.bots.get(bot.id), ...bot });
+        updateBotStats(bot);
+      }
+    });
+
     socket.on('chat-message', ({ botId, type, text, timestamp }) => {
       addConsoleMessage(botId, type, text, timestamp);
       saveMessageToStorage(botId, type, text, timestamp);
@@ -1468,12 +1503,6 @@
 
     socket.on('system-message', ({ type, text }) => {
       showToast(type, text);
-    });
-
-    socket.on('bot-stats-update', (bots) => {
-      for (const bot of bots) {
-        updateBotStats(bot);
-      }
     });
 
     // ── Sunucu Verisi Yönetimi ─────────────────────────────────
@@ -1533,9 +1562,7 @@
         if (state.currentServerKey === server.serverKey) {
           updatePanelHeader(server);
         }
-      } catch (err) {
-        // API hatası sessizce atla
-      }
+      } catch (err) {}
     }
 
     // ── Sayfa Geçişleri ────────────────────────────────────────
@@ -1637,7 +1664,7 @@
         </div>
       `;
 
-      // Bot Ekle butonu
+      // Bot Ekle butonu - KART CLICK'TEN ÖNCE
       const addBtn = card.querySelector('[data-action="add"]');
       if (addBtn) {
         addBtn.addEventListener('click', (e) => {
@@ -1646,7 +1673,7 @@
         });
       }
 
-      // Tümünü Çıkar butonu
+      // Tümünü Çıkar butonu - KART CLICK'TEN ÖNCE
       const removeBtn = card.querySelector('[data-action="remove-all"]');
       if (removeBtn) {
         removeBtn.addEventListener('click', (e) => {
@@ -1657,13 +1684,12 @@
         });
       }
 
-      // Kartın kendisine tıklama (panel aç) - BUTONLARDAN SONRA EKLENMELİ
+      // Kartın kendisine tıklama (panel aç) - BUTONLARDAN SONRA
       card.addEventListener('click', (e) => {
         if (e.target.closest('.server-actions')) return;
         openServerPanel(server.serverKey);
       });
 
-      // LocalStorage'dan geçmiş mesajları yükle
       if (server.bots && server.bots.length > 0) {
         server.bots.forEach(b => {
           if (b && b.id) loadMessagesFromStorage(b.id);
@@ -1699,7 +1725,6 @@
         countEl.innerHTML = `${server.onlineBotCount}<span>/${server.totalBotCount}</span>`;
       }
     }
-
 
     // ── Bot Kontrol Paneli ─────────────────────────────────────
     function openServerPanel(serverKey) {
@@ -1749,7 +1774,6 @@
         } else {
           updateBotCard(card, bot);
         }
-        // Her bot için geçmişi yükle
         if (bot && bot.id) {
           loadMessagesFromStorage(bot.id);
         }
@@ -1862,6 +1886,10 @@
         socket.emit('toggle-antiafk', { botId: bot.id, enabled: newState });
       });
 
+      card.querySelector('[data-action="script"]').addEventListener('click', () => {
+        openScriptModal(bot.id, bot.name);
+      });
+
       const msgInput = card.querySelector('.msg-input');
       const sendBtn = card.querySelector('[data-action="send"]');
 
@@ -1884,48 +1912,35 @@
 
         if (['forward', 'back', 'left', 'right', 'sneak', 'sprint'].includes(moveAction)) {
           // Toggle butonlar (basılı tutma)
-          btn.addEventListener('mousedown', () => {
+          const startMove = (e) => {
+            if (e) e.preventDefault();
             btn.classList.add('active');
             socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
-          });
-          btn.addEventListener('mouseup', () => {
+          };
+          const endMove = (e) => {
+            if (e) e.preventDefault();
             btn.classList.remove('active');
             socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
-          });
+          };
+
+          btn.addEventListener('mousedown', startMove);
+          btn.addEventListener('mouseup', endMove);
           btn.addEventListener('mouseleave', () => {
-            if (btn.classList.contains('active')) {
-              btn.classList.remove('active');
-              socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
-            }
+            if (btn.classList.contains('active')) endMove();
           });
           // Touch desteği
-          btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            btn.classList.add('active');
-            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
-          });
-          btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            btn.classList.remove('active');
-            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
-          });
+          btn.addEventListener('touchstart', startMove, { passive: false });
+          btn.addEventListener('touchend', endMove, { passive: false });
         } else {
           // Tek tık eylemler
           btn.addEventListener('click', () => {
             socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
-            // Animasyon efekti
             btn.style.transform = 'scale(0.9)';
             setTimeout(() => btn.style.transform = '', 150);
           });
         }
       });
 
-      // Script butonu
-      card.querySelector('[data-action="script"]').addEventListener('click', () => {
-        openScriptModal(bot.id, bot.name);
-      });
-
-      // LocalStorage'dan geçmiş mesajları yükle
       if (bot && bot.id) {
         loadMessagesFromStorage(bot.id);
       }
@@ -1950,7 +1965,6 @@
       if (statusText) statusText.textContent = statusLabel;
       if (nameEl) nameEl.textContent = bot.name;
 
-      // Koordinat güncelle
       const coordsEl = card.querySelector('#coords-' + bot.id);
       if (coordsEl && bot.x !== null) {
         coordsEl.textContent = `X:${bot.x} Y:${bot.y} Z:${bot.z}`;
@@ -1959,7 +1973,6 @@
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
     }
 
-    // ── Bot İstatistiklerini Güncelle ────────────────────────
     function updateBotStats(botData) {
       const healthEl = document.getElementById('health-' + botData.id);
       const foodEl = document.getElementById('food-' + botData.id);
@@ -2002,9 +2015,7 @@
       }
     }
 
-    // ── Script Modal ─────────────────────────────────────────
-    let currentScriptBotId = null;
-
+    // ── Script Panel ─────────────────────────────────────────
     const scriptPresets = {
       'chat-loop': `// Her 5 saniyede rastgele mesaj at
 const messages = ['Merhaba!', 'Selam', 'Naber?', 'AFK', ':)'];
@@ -2068,9 +2079,7 @@ setInterval(followNearest, 1000);`,
 function checkFood() {
   if (bot.food < 15) {
     console.log('Açlık düşük! Yemek yiyorum...');
-    // Burada yemek yeme kodu olurdu
-    // mineflayer-collectblock gibi plugin gerekli
-    bot.chat('/feed'); // veya sunucu komutu
+    bot.chat('/feed');
   }
 }
 
@@ -2079,7 +2088,7 @@ console.log('Oto yemek aktif');`
     };
 
     function openScriptModal(botId, botName) {
-      currentScriptBotId = botId;
+      state.currentScriptBotId = botId;
       document.getElementById('script-modal-title').textContent = botName + ' - Script Panel';
       els.modalScript.classList.add('active');
       document.getElementById('script-editor').focus();
@@ -2087,13 +2096,13 @@ console.log('Oto yemek aktif');`
 
     els.modalScriptClose.addEventListener('click', () => {
       els.modalScript.classList.remove('active');
-      currentScriptBotId = null;
+      state.currentScriptBotId = null;
     });
 
     els.modalScript.addEventListener('click', (e) => {
       if (e.target === els.modalScript) {
         els.modalScript.classList.remove('active');
-        currentScriptBotId = null;
+        state.currentScriptBotId = null;
       }
     });
 
@@ -2106,13 +2115,13 @@ console.log('Oto yemek aktif');`
     });
 
     document.getElementById('btn-run-script').addEventListener('click', () => {
-      if (!currentScriptBotId) return;
+      if (!state.currentScriptBotId) return;
       const script = document.getElementById('script-editor').value.trim();
       if (!script) {
         showToast('error', 'Script boş olamaz.');
         return;
       }
-      socket.emit('run-bot-script', { botId: currentScriptBotId, script });
+      socket.emit('run-bot-script', { botId: state.currentScriptBotId, script });
       showToast('success', 'Script çalıştırılıyor...');
     });
 
@@ -2179,7 +2188,8 @@ console.log('Oto yemek aktif');`
         return;
       }
 
-      const botNames = namesText.split('\n').map(n => n.trim()).filter(n => n);
+      const botNames = namesText.split('
+').map(n => n.trim()).filter(n => n);
 
       if (botNames.length === 0) {
         showToast('error', 'Geçerli bot adı bulunamadı.');
@@ -2295,61 +2305,6 @@ console.log('Oto yemek aktif');`
     // ── Başlangıç ──────────────────────────────────────────────
     renderServerBrowser();
   </script>
-
-
-
-  <!-- Script Panel Modal -->
-  <div class="modal-overlay" id="modal-script">
-    <div class="modal" style="max-width: 700px;">
-      <div class="modal-header">
-        <h3><span>📜</span> <span id="script-modal-title">Bot Script</span></h3>
-        <button class="modal-close" id="modal-script-close">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="script-presets" id="script-presets">
-          <button class="script-preset" data-preset="chat-loop">💬 Mesaj Döngüsü</button>
-          <button class="script-preset" data-preset="auto-chat">🤖 Oto Chat</button>
-          <button class="script-preset" data-preset="look-around">👀 Etrafına Bak</button>
-          <button class="script-preset" data-preset="spam-click">⚔️ Spam Tıkla</button>
-          <button class="script-preset" data-preset="follow-player">🏃 Oyuncu Takip</button>
-          <button class="script-preset" data-preset="auto-eat">🍖 Oto Yemek Ye</button>
-        </div>
-        <div class="form-group">
-          <label>JavaScript Kodu (bot değişkeni hazır)</label>
-          <textarea class="script-editor" id="script-editor" placeholder="// bot.chat('Merhaba!');
-// bot.swingArm('right');
-// console.log(bot.entity.position);
-
-// Örnek: Her 3 saniyede mesaj at
-setInterval(() => {
-  bot.chat('Merhaba dünya!');
-}, 3000);
-
-// Örnek: Etrafına bak
-// bot.look(Math.random() * Math.PI * 2, 0, true);
-
-// Örnek: Blok kır
-// const block = bot.blockAt(bot.entity.position.offset(0, -1, 1));
-// if (block) bot.dig(block);
-
-// Örnek: Elindeki itemi kullan
-// bot.activateItem();
-
-// Tüm bot API'lerine erişim: bot.chat, bot.look, bot.dig, bot.placeBlock,
-// bot.swingArm, bot.setControlState, bot.entity.position, bot.health,
-// bot.food, bot.experience, bot.inventory, bot.players, vb."></textarea>
-        </div>
-        <div class="script-actions">
-          <button class="btn-script" id="btn-run-script">
-            <span>▶️</span> Çalıştır
-          </button>
-          <button class="btn-script btn-script-clear" id="btn-clear-script">
-            <span>🗑️</span> Temizle
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>
