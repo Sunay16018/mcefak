@@ -226,6 +226,30 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── Bot Script Durdur ─────────────────────────────────────
+  socket.on('stop-bot-script', (botId) => {
+    try {
+      const result = botManager.stopBotScript(botId);
+      socket.emit('system-message', { 
+        type: result.success ? 'success' : 'error', 
+        text: result.message 
+      });
+    } catch (err) {
+      console.error('[Socket] stop-bot-script hatası:', err);
+      socket.emit('system-message', { type: 'error', text: 'Script durdurma hatası.' });
+    }
+  });
+
+  // ── Bot Script Durumu Sorgula ─────────────────────────────
+  socket.on('get-script-status', (botId) => {
+    try {
+      const result = botManager.getScriptStatus(botId);
+      socket.emit('script-status', { botId, ...result });
+    } catch (err) {
+      console.error('[Socket] get-script-status hatası:', err);
+    }
+  });
+
   // ── Bağlantı Kopması ────────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`[Socket] İstemci ayrıldı: ${socket.id}`);
@@ -247,7 +271,7 @@ setInterval(() => {
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════╗`);
-  console.log(`║   Minecraft AFK Client v3.0.0            ║`);
+  console.log(`║   Minecraft AFK Client v3.1.0            ║`);
   console.log(`║   Port: ${PORT.toString().padEnd(33)}║`);
   console.log(`║   Mode: ${(process.env.PORT ? 'Render.com' : 'Local').padEnd(33)}║`);
   console.log(`╚══════════════════════════════════════════╝\n`);
