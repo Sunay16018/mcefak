@@ -41,6 +41,7 @@
       color: var(--text-primary);
       min-height: 100vh;
       line-height: 1.5;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .topbar {
@@ -764,6 +765,10 @@
       flex-direction: column;
       align-items: center;
       gap: 3px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
 
     .movement-row {
@@ -788,6 +793,10 @@
       justify-content: center;
       user-select: none;
       -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
     }
 
     .move-btn:hover {
@@ -2029,7 +2038,7 @@
             <button class="move-btn wide" data-move="swing" data-bot="${bot.id}">✋ Sallan</button>
             <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
           </div>
-          <div class="move-label">Tıkla &amp; Tut (WASD) | Tek Tık (Eylemler)</div>
+          <div class="move-label">Basılı Tut = Sürekli Çalışır | Bırak = Durur</div>
         </div>
         <div class="bot-console" id="console-${bot.id}"></div>
         <div class="bot-controls">
@@ -2114,42 +2123,57 @@
       const moveButtons = card.querySelectorAll('.move-btn');
       moveButtons.forEach(btn => {
         const moveAction = btn.dataset.move;
+        let holdInterval = null;
+        let isHolding = false;
 
-        if (['forward', 'back', 'left', 'right', 'sneak', 'sprint'].includes(moveAction)) {
-          // Toggle butonlar (basılı tutma)
-          const startMove = (e) => {
-            if (e) e.preventDefault();
-            btn.classList.add('active');
+        // Basılı tutma başladığında
+        const startHold = (e) => {
+          if (e) e.preventDefault();
+          if (isHolding) return;
+          isHolding = true;
+          btn.classList.add('active');
+
+          // İlk eylem hemen gönder
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
+          }
+
+          // Basılı tutulduğu sürece her 100ms'de bir tekrarla (sürekli hareket)
+          holdInterval = setInterval(() => {
+            if (!isHolding) return;
             if (!isOfflineMode && socket && typeof socket.emit === 'function') {
               socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
             }
-          };
-          const endMove = (e) => {
-            if (e) e.preventDefault();
-            btn.classList.remove('active');
-            if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-              socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
-            }
-          };
+          }, 100);
+        };
 
-          btn.addEventListener('mousedown', startMove);
-          btn.addEventListener('mouseup', endMove);
-          btn.addEventListener('mouseleave', () => {
-            if (btn.classList.contains('active')) endMove();
-          });
-          // Touch desteği
-          btn.addEventListener('touchstart', startMove, { passive: false });
-          btn.addEventListener('touchend', endMove, { passive: false });
-        } else {
-          // Tek tık eylemler
-          btn.addEventListener('click', () => {
-            if (!isOfflineMode && socket && typeof socket.emit === 'function') {
-              socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
-            }
-            btn.style.transform = 'scale(0.9)';
-            setTimeout(() => btn.style.transform = '', 150);
-          });
-        }
+        // Basılı tutma bittiğinde
+        const endHold = (e) => {
+          if (e) e.preventDefault();
+          if (!isHolding) return;
+          isHolding = false;
+          btn.classList.remove('active');
+          if (holdInterval) {
+            clearInterval(holdInterval);
+            holdInterval = null;
+          }
+          // Durma sinyali gönder
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
+          }
+        };
+
+        // Mouse events
+        btn.addEventListener('mousedown', startHold);
+        btn.addEventListener('mouseup', endHold);
+        btn.addEventListener('mouseleave', () => {
+          if (isHolding) endHold();
+        });
+
+        // Touch events (mobile)
+        btn.addEventListener('touchstart', startHold, { passive: false });
+        btn.addEventListener('touchend', endHold, { passive: false });
+        btn.addEventListener('touchcancel', endHold, { passive: false });
       });
 
       if (bot && bot.id) {
