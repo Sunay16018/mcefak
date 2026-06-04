@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft AFK Client v2.0</title>
+  <title>Minecraft AFK Client v3.0</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
@@ -934,6 +934,194 @@
 
       .bots-grid { grid-template-columns: 1fr; }
     }
+  
+
+    /* ── Bot Stats Bar ──────────────────────────────────────── */
+    .bot-stats {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+
+    .bot-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .bot-stat .stat-icon { font-size: 0.9rem; }
+    .bot-stat .stat-value { font-weight: 700; color: var(--accent); }
+    .bot-stat .stat-label { color: var(--text-muted); font-size: 0.7rem; }
+
+    .bot-stat.health .stat-value { color: var(--error); }
+    .bot-stat.food .stat-value { color: var(--warning); }
+    .bot-stat.xp .stat-value { color: #a371f7; }
+
+    /* ── Movement Controls ──────────────────────────────────── */
+    .movement-controls {
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .movement-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .move-btn {
+      width: 42px;
+      height: 36px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .move-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+
+    .move-btn:active, .move-btn.active {
+      background: rgba(88, 166, 255, 0.2);
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: scale(0.95);
+    }
+
+    .move-btn.wide { width: 90px; }
+
+    .move-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* ── Script Panel ─────────────────────────────────────── */
+    .script-panel {
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .script-panel.active { display: block; }
+
+    .script-editor {
+      width: 100%;
+      min-height: 120px;
+      background: #0a0c10;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .script-editor:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .script-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-script {
+      flex: 1;
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-script:hover {
+      background: linear-gradient(135deg, #2ea043, #3fb950);
+      transform: translateY(-1px);
+    }
+
+    .btn-script-clear {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-script-clear:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .script-presets {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .script-preset {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .script-preset:hover {
+      background: var(--bg-hover);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .bot-card.expanded .bot-console {
+      height: 140px;
+    }
+
   </style>
 </head>
 <body>
@@ -943,7 +1131,7 @@
       <div class="logo-icon">⛏️</div>
       <div>
         <h1>Minecraft AFK Client</h1>
-        <span>v2.0.0 • Server Browser + Bot Kontrol</span>
+        <span>v3.0.0 • Bot Kontrol + Script + Hareket</span>
       </div>
     </div>
     <div class="stats">
@@ -1242,6 +1430,15 @@
 
       for (const bot of bots) {
         const existing = state.bots.get(bot.id);
+        // Merge stats from existing if available
+        if (existing) {
+          Object.assign(bot, {
+            x: existing.x, y: existing.y, z: existing.z,
+            health: existing.health, maxHealth: existing.maxHealth,
+            food: existing.food, foodSaturation: existing.foodSaturation,
+            xp: existing.xp, level: existing.level
+          });
+        }
         state.bots.set(bot.id, bot);
         if (!state.consoles.has(bot.id)) {
           state.consoles.set(bot.id, []);
@@ -1271,6 +1468,12 @@
 
     socket.on('system-message', ({ type, text }) => {
       showToast(type, text);
+    });
+
+    socket.on('bot-stats-update', (bots) => {
+      for (const bot of bots) {
+        updateBotStats(bot);
+      }
     });
 
     // ── Sunucu Verisi Yönetimi ─────────────────────────────────
@@ -1584,14 +1787,57 @@
               <div class="bot-name">${escapeHtml(bot.name)}</div>
               <div class="bot-meta">
                 <span id="status-${bot.id}">${statusText}</span>
+                <span id="coords-${bot.id}" style="color:var(--text-muted);font-family:monospace;"></span>
               </div>
             </div>
           </div>
           <div class="bot-actions">
+            <button class="btn-icon" title="Script Panel" data-action="script" data-bot="${bot.id}">📜</button>
             <button class="btn-icon" title="Oyuncu Listesi" data-action="players" data-bot="${bot.id}">👥</button>
             <button class="btn-icon ${bot.antiAfkEnabled ? 'active' : ''}" title="Anti-AFK" data-action="antiafk" data-bot="${bot.id}" id="afk-btn-${bot.id}">🛡️</button>
             <button class="btn-icon danger" title="Botu Çıkar" data-action="remove" data-bot="${bot.id}">🗑️</button>
           </div>
+        </div>
+        <div class="bot-stats" id="stats-${bot.id}">
+          <div class="bot-stat health">
+            <span class="stat-icon">❤️</span>
+            <span class="stat-value" id="health-${bot.id}">-</span>
+            <span class="stat-label">HP</span>
+          </div>
+          <div class="bot-stat food">
+            <span class="stat-icon">🍖</span>
+            <span class="stat-value" id="food-${bot.id}">-</span>
+            <span class="stat-label">Açlık</span>
+          </div>
+          <div class="bot-stat xp">
+            <span class="stat-icon">⭐</span>
+            <span class="stat-value" id="xp-${bot.id}">-</span>
+            <span class="stat-label">XP</span>
+          </div>
+          <div class="bot-stat">
+            <span class="stat-icon">📍</span>
+            <span class="stat-value" id="pos-${bot.id}" style="font-family:monospace;font-size:0.7rem;">-</span>
+          </div>
+        </div>
+        <div class="movement-controls" id="movement-${bot.id}">
+          <div class="movement-row">
+            <button class="move-btn" data-move="forward" data-bot="${bot.id}">W</button>
+          </div>
+          <div class="movement-row">
+            <button class="move-btn" data-move="left" data-bot="${bot.id}">A</button>
+            <button class="move-btn" data-move="back" data-bot="${bot.id}">S</button>
+            <button class="move-btn" data-move="right" data-bot="${bot.id}">D</button>
+          </div>
+          <div class="movement-row">
+            <button class="move-btn wide" data-move="jump" data-bot="${bot.id}">⬆️ Zıpla</button>
+            <button class="move-btn wide" data-move="sneak" data-bot="${bot.id}">🦆 Eğil</button>
+            <button class="move-btn wide" data-move="sprint" data-bot="${bot.id}">🏃 Koş</button>
+          </div>
+          <div class="movement-row">
+            <button class="move-btn wide" data-move="swing" data-bot="${bot.id}">✋ Sallan</button>
+            <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
+          </div>
+          <div class="move-label">Tıkla &amp; Tut (WASD) | Tek Tık (Eylemler)</div>
         </div>
         <div class="bot-console" id="console-${bot.id}"></div>
         <div class="bot-controls">
@@ -1631,6 +1877,54 @@
         if (e.key === 'Enter') sendBtn.click();
       });
 
+      // ── Hareket Kontrolleri ────────────────────────────────
+      const moveButtons = card.querySelectorAll('.move-btn');
+      moveButtons.forEach(btn => {
+        const moveAction = btn.dataset.move;
+
+        if (['forward', 'back', 'left', 'right', 'sneak', 'sprint'].includes(moveAction)) {
+          // Toggle butonlar (basılı tutma)
+          btn.addEventListener('mousedown', () => {
+            btn.classList.add('active');
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
+          });
+          btn.addEventListener('mouseup', () => {
+            btn.classList.remove('active');
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
+          });
+          btn.addEventListener('mouseleave', () => {
+            if (btn.classList.contains('active')) {
+              btn.classList.remove('active');
+              socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
+            }
+          });
+          // Touch desteği
+          btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            btn.classList.add('active');
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
+          });
+          btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            btn.classList.remove('active');
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: false });
+          });
+        } else {
+          // Tek tık eylemler
+          btn.addEventListener('click', () => {
+            socket.emit('bot-move', { botId: bot.id, action: moveAction, state: true });
+            // Animasyon efekti
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => btn.style.transform = '', 150);
+          });
+        }
+      });
+
+      // Script butonu
+      card.querySelector('[data-action="script"]').addEventListener('click', () => {
+        openScriptModal(bot.id, bot.name);
+      });
+
       // LocalStorage'dan geçmiş mesajları yükle
       if (bot && bot.id) {
         loadMessagesFromStorage(bot.id);
@@ -1656,7 +1950,35 @@
       if (statusText) statusText.textContent = statusLabel;
       if (nameEl) nameEl.textContent = bot.name;
 
+      // Koordinat güncelle
+      const coordsEl = card.querySelector('#coords-' + bot.id);
+      if (coordsEl && bot.x !== null) {
+        coordsEl.textContent = `X:${bot.x} Y:${bot.y} Z:${bot.z}`;
+      }
+
       updateAntiAfkButton(bot.id, bot.antiAfkEnabled);
+    }
+
+    // ── Bot İstatistiklerini Güncelle ────────────────────────
+    function updateBotStats(botData) {
+      const healthEl = document.getElementById('health-' + botData.id);
+      const foodEl = document.getElementById('food-' + botData.id);
+      const xpEl = document.getElementById('xp-' + botData.id);
+      const posEl = document.getElementById('pos-' + botData.id);
+      const coordsEl = document.getElementById('coords-' + botData.id);
+
+      if (botData.health !== null) {
+        if (healthEl) healthEl.textContent = `${Math.floor(botData.health)}/${botData.maxHealth || 20}`;
+        if (foodEl) foodEl.textContent = `${Math.floor(botData.food)}/20`;
+        if (xpEl) xpEl.textContent = `Lv.${botData.level || 0}`;
+        if (posEl) posEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
+        if (coordsEl) coordsEl.textContent = `X:${botData.x} Y:${botData.y} Z:${botData.z}`;
+      } else {
+        if (healthEl) healthEl.textContent = '-';
+        if (foodEl) foodEl.textContent = '-';
+        if (xpEl) xpEl.textContent = '-';
+        if (posEl) posEl.textContent = '-';
+      }
     }
 
     function updateAntiAfkButton(botId, enabled) {
@@ -1679,6 +2001,124 @@
         consoleEl.removeChild(consoleEl.firstChild);
       }
     }
+
+    // ── Script Modal ─────────────────────────────────────────
+    let currentScriptBotId = null;
+
+    const scriptPresets = {
+      'chat-loop': `// Her 5 saniyede rastgele mesaj at
+const messages = ['Merhaba!', 'Selam', 'Naber?', 'AFK', ':)'];
+setInterval(() => {
+  const msg = messages[Math.floor(Math.random() * messages.length)];
+  bot.chat(msg);
+  console.log('Gönderildi:', msg);
+}, 5000);`,
+      'auto-chat': `// Belirli aralıklarla mesaj at
+let count = 0;
+const interval = setInterval(() => {
+  count++;
+  bot.chat('Mesaj #' + count);
+  console.log('Mesaj #' + count + ' gönderildi');
+}, 3000);
+
+// 10 mesaj sonra dur
+setTimeout(() => {
+  clearInterval(interval);
+  console.log('Oto chat durduruldu');
+}, 35000);`,
+      'look-around': `// Etrafına rastgele bak
+function lookRandom() {
+  const yaw = Math.random() * Math.PI * 2;
+  const pitch = (Math.random() - 0.5) * Math.PI / 2;
+  bot.look(yaw, pitch, true);
+  console.log('Bakış yönü değiştirildi');
+}
+
+setInterval(lookRandom, 2000);
+lookRandom();`,
+      'spam-click': `// Sürekli sağ tık (el sallama)
+setInterval(() => {
+  bot.swingArm('right');
+  console.log('El sallandı');
+}, 500);`,
+      'follow-player': `// En yakın oyuncuyu takip et
+function followNearest() {
+  const players = Object.values(bot.players);
+  let nearest = null;
+  let minDist = Infinity;
+
+  players.forEach(p => {
+    if (p.entity && p.username !== bot.username) {
+      const dist = bot.entity.position.distanceTo(p.entity.position);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = p;
+      }
+    }
+  });
+
+  if (nearest && nearest.entity) {
+    bot.lookAt(nearest.entity.position.offset(0, 1.6, 0));
+    console.log('Takip edilen:', nearest.username);
+  }
+}
+
+setInterval(followNearest, 1000);`,
+      'auto-eat': `// Açlık 15'in altına düşerse yemek ye
+function checkFood() {
+  if (bot.food < 15) {
+    console.log('Açlık düşük! Yemek yiyorum...');
+    // Burada yemek yeme kodu olurdu
+    // mineflayer-collectblock gibi plugin gerekli
+    bot.chat('/feed'); // veya sunucu komutu
+  }
+}
+
+setInterval(checkFood, 5000);
+console.log('Oto yemek aktif');`
+    };
+
+    function openScriptModal(botId, botName) {
+      currentScriptBotId = botId;
+      document.getElementById('script-modal-title').textContent = botName + ' - Script Panel';
+      els.modalScript.classList.add('active');
+      document.getElementById('script-editor').focus();
+    }
+
+    els.modalScriptClose.addEventListener('click', () => {
+      els.modalScript.classList.remove('active');
+      currentScriptBotId = null;
+    });
+
+    els.modalScript.addEventListener('click', (e) => {
+      if (e.target === els.modalScript) {
+        els.modalScript.classList.remove('active');
+        currentScriptBotId = null;
+      }
+    });
+
+    document.getElementById('script-presets').addEventListener('click', (e) => {
+      if (e.target.classList.contains('script-preset')) {
+        const preset = e.target.dataset.preset;
+        const editor = document.getElementById('script-editor');
+        editor.value = scriptPresets[preset] || '';
+      }
+    });
+
+    document.getElementById('btn-run-script').addEventListener('click', () => {
+      if (!currentScriptBotId) return;
+      const script = document.getElementById('script-editor').value.trim();
+      if (!script) {
+        showToast('error', 'Script boş olamaz.');
+        return;
+      }
+      socket.emit('run-bot-script', { botId: currentScriptBotId, script });
+      showToast('success', 'Script çalıştırılıyor...');
+    });
+
+    document.getElementById('btn-clear-script').addEventListener('click', () => {
+      document.getElementById('script-editor').value = '';
+    });
 
     // ── Modal: Bot Ekle ────────────────────────────────────────
     function openAddBotModal(server) {
@@ -1855,6 +2295,61 @@
     // ── Başlangıç ──────────────────────────────────────────────
     renderServerBrowser();
   </script>
+
+
+
+  <!-- Script Panel Modal -->
+  <div class="modal-overlay" id="modal-script">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3><span>📜</span> <span id="script-modal-title">Bot Script</span></h3>
+        <button class="modal-close" id="modal-script-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="script-presets" id="script-presets">
+          <button class="script-preset" data-preset="chat-loop">💬 Mesaj Döngüsü</button>
+          <button class="script-preset" data-preset="auto-chat">🤖 Oto Chat</button>
+          <button class="script-preset" data-preset="look-around">👀 Etrafına Bak</button>
+          <button class="script-preset" data-preset="spam-click">⚔️ Spam Tıkla</button>
+          <button class="script-preset" data-preset="follow-player">🏃 Oyuncu Takip</button>
+          <button class="script-preset" data-preset="auto-eat">🍖 Oto Yemek Ye</button>
+        </div>
+        <div class="form-group">
+          <label>JavaScript Kodu (bot değişkeni hazır)</label>
+          <textarea class="script-editor" id="script-editor" placeholder="// bot.chat('Merhaba!');
+// bot.swingArm('right');
+// console.log(bot.entity.position);
+
+// Örnek: Her 3 saniyede mesaj at
+setInterval(() => {
+  bot.chat('Merhaba dünya!');
+}, 3000);
+
+// Örnek: Etrafına bak
+// bot.look(Math.random() * Math.PI * 2, 0, true);
+
+// Örnek: Blok kır
+// const block = bot.blockAt(bot.entity.position.offset(0, -1, 1));
+// if (block) bot.dig(block);
+
+// Örnek: Elindeki itemi kullan
+// bot.activateItem();
+
+// Tüm bot API'lerine erişim: bot.chat, bot.look, bot.dig, bot.placeBlock,
+// bot.swingArm, bot.setControlState, bot.entity.position, bot.health,
+// bot.food, bot.experience, bot.inventory, bot.players, vb."></textarea>
+        </div>
+        <div class="script-actions">
+          <button class="btn-script" id="btn-run-script">
+            <span>▶️</span> Çalıştır
+          </button>
+          <button class="btn-script btn-script-clear" id="btn-clear-script">
+            <span>🗑️</span> Temizle
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
