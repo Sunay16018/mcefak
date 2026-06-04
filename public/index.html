@@ -1637,12 +1637,6 @@
         </div>
       `;
 
-      // Kartın kendisine tıklama (panel aç)
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.server-actions')) return;
-        openServerPanel(server.serverKey);
-      });
-
       // Bot Ekle butonu
       const addBtn = card.querySelector('[data-action="add"]');
       if (addBtn) {
@@ -1662,6 +1656,12 @@
           }
         });
       }
+
+      // Kartın kendisine tıklama (panel aç) - BUTONLARDAN SONRA EKLENMELİ
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.server-actions')) return;
+        openServerPanel(server.serverKey);
+      });
 
       // LocalStorage'dan geçmiş mesajları yükle
       if (server.bots && server.bots.length > 0) {
