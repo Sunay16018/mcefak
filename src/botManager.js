@@ -1,9 +1,9 @@
 /**
- * Bot Yöneticisi v3.0 - Minecraft AFK Client
+ * Bot Yöneticisi v3.1 - Minecraft AFK Client
  * 
- * Yeni özellikler:
+ * Özellikler:
  * - Bot koordinat, can, açlık, XP takibi
- * - WASD hareket kontrolü (forward, back, left, right, jump, sneak, sit)
+ * - WASD hareket kontrolü (forward, back, left, right, jump, sneak, sprint)
  * - Bot başına özel script çalıştırma (sandboxed VM)
  * - Sunucu bazlı bot gruplama
  * - Toplu bot ekleme/çıkarma
@@ -18,13 +18,14 @@ const { SocksClient } = require('socks');
 const os = require('os');
 const vm = require('vm');
 const { EventEmitter } = require('events');
+const Vec3 = require('vec3');
 
 const AntiAfk = require('./antiAfk');
 
 // ── Yardımcı Fonksiyonlar ───────────────────────────────────────
 
 function generateId() {
-  return `bot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return 'bot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
 function parseProxy(proxyString) {
@@ -59,7 +60,21 @@ function extractChatText(message) {
 }
 
 function getServerKey(ip, port) {
-  return `${ip}:${port}`;
+  return ip + ':' + port;
+}
+
+function safeGet(obj, path, defaultValue) {
+  try {
+    const keys = path.split('.');
+    let result = obj;
+    for (const key of keys) {
+      if (result === null || result === undefined) return defaultValue;
+      result = result[key];
+    }
+    return result === null || result === undefined ? defaultValue : result;
+  } catch (e) {
+    return defaultValue;
+  }
 }
 
 // ── Script Runner Sınıfı (Durdurulabilir Script) ────────────────
@@ -119,17 +134,17 @@ class ScriptRunner extends EventEmitter {
         log: (...args) => {
           if (!self.isRunning) return;
           const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'system', `[Script] ${text}`);
+          self.botManager.emitChatMessage(self.botId, 'system', '[Script] ' + text);
         },
         error: (...args) => {
           if (!self.isRunning) return;
           const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'error', `[Script Error] ${text}`);
+          self.botManager.emitChatMessage(self.botId, 'error', '[Script Error] ' + text);
         },
         warn: (...args) => {
           if (!self.isRunning) return;
           const text = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-          self.botManager.emitChatMessage(self.botId, 'info', `[Script Warn] ${text}`);
+          self.botManager.emitChatMessage(self.botId, 'info', '[Script Warn] ' + text);
         }
       },
       setTimeout: wrappedSetTimeout,
@@ -148,7 +163,7 @@ class ScriptRunner extends EventEmitter {
       require: (mod) => {
         const allowed = ['vec3'];
         if (allowed.includes(mod)) return require(mod);
-        throw new Error(`Modül '${mod}' izin verilmiyor.`);
+        throw new Error('Modül "' + mod + '" izin verilmiyor.');
       }
     };
   }
@@ -179,7 +194,7 @@ class ScriptRunner extends EventEmitter {
       };
     } catch (err) {
       this.stop();
-      return { success: false, message: `Script hatası: ${err.message}` };
+      return { success: false, message: 'Script hatası: ' + err.message };
     }
   }
 
@@ -201,9 +216,9 @@ class ScriptRunner extends EventEmitter {
     this.intervals.clear();
 
     const duration = this.startTime ? ((Date.now() - this.startTime) / 1000).toFixed(1) : '0';
-    this.botManager.emitChatMessage(this.botId, 'system', `⏹️ Script durduruldu. Süre: ${duration}s`);
+    this.botManager.emitChatMessage(this.botId, 'system', '⏹️ Script durduruldu. Süre: ' + duration + 's');
 
-    return { success: true, message: `Script durduruldu. (${duration} saniye çalıştı)` };
+    return { success: true, message: 'Script durduruldu. (' + duration + ' saniye çalıştı)' };
   }
 
   getStatus() {
@@ -220,15 +235,10 @@ class ScriptRunner extends EventEmitter {
 class BotManager {
   constructor(io) {
     this.io = io;
-    /** @type {Map<string, Object>} - Aktif botlar (id -> botData) */
     this.bots = new Map();
-    /** @type {Map<string, ScriptRunner>} - Aktif script runner'lar */
     this.scriptRunners = new Map();
-    /** @type {number} - Bot başına tahmini RAM (MB) */
     this.ramPerBot = 200;
-    /** @type {number} - Minimum bot limiti */
     this.minBots = 1;
-    /** @type {number|null} - Manuel override limiti */
     this.manualMaxBots = process.env.MAX_BOTS ? parseInt(process.env.MAX_BOTS, 10) : null;
   }
 
@@ -273,9 +283,6 @@ class BotManager {
     return bots;
   }
 
-  /**
-   * Bot istatistiklerini döndürür (koordinat, can, açlık, XP)
-   */
   getAllBotsWithStats() {
     const bots = [];
     for (const [id, data] of this.bots) {
@@ -305,26 +312,29 @@ class BotManager {
         x: null, y: null, z: null,
         health: null, maxHealth: null,
         food: null, foodSaturation: null,
-        xp: null, level: null
+        xp: null, level: null,
+        yaw: null, pitch: null
       };
     }
 
+    const pos = bot.entity.position;
+    const exp = safeGet(bot, 'experience', {});
+
     return {
-      x: Math.round(bot.entity.position.x * 10) / 10,
-      y: Math.round(bot.entity.position.y * 10) / 10,
-      z: Math.round(bot.entity.position.z * 10) / 10,
-      health: Math.round(bot.health * 10) / 10,
+      x: pos ? Math.round(pos.x * 10) / 10 : null,
+      y: pos ? Math.round(pos.y * 10) / 10 : null,
+      z: pos ? Math.round(pos.z * 10) / 10 : null,
+      health: typeof bot.health === 'number' ? Math.round(bot.health * 10) / 10 : null,
       maxHealth: bot.maxHealth || 20,
-      food: bot.food || 0,
-      foodSaturation: Math.round((bot.foodSaturation || 0) * 10) / 10,
-      xp: Math.round((bot.experience ? bot.experience.points : 0)),
-      level: bot.experience ? bot.experience.level : 0
+      food: typeof bot.food === 'number' ? Math.round(bot.food * 10) / 10 : null,
+      foodSaturation: typeof bot.foodSaturation === 'number' ? Math.round(bot.foodSaturation * 10) / 10 : null,
+      xp: typeof exp.points === 'number' ? Math.round(exp.points) : 0,
+      level: typeof exp.level === 'number' ? exp.level : 0,
+      yaw: typeof bot.entity.yaw === 'number' ? bot.entity.yaw : null,
+      pitch: typeof bot.entity.pitch === 'number' ? bot.entity.pitch : null
     };
   }
 
-  /**
-   * Sunucu bazlı gruplanmış botları döndürür
-   */
   getBotsByServer() {
     const servers = new Map();
 
@@ -367,7 +377,7 @@ class BotManager {
     if (this.bots.size >= ramUsage.maxBots) {
       return { 
         success: false, 
-        message: `Bot limitine ulaşıldı (${ramUsage.botCount}/${ramUsage.maxBots}). RAM: ${ramUsage.usedRamMB}/${ramUsage.totalRamMB} MB` 
+        message: 'Bot limitine ulaşıldı (' + ramUsage.botCount + '/' + ramUsage.maxBots + '). RAM: ' + ramUsage.usedRamMB + '/' + ramUsage.totalRamMB + ' MB' 
       };
     }
 
@@ -394,14 +404,13 @@ class BotManager {
 
     this.bots.set(botId, botData);
     this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
 
     try {
       await this._connectBot(botData);
-      return { success: true, message: `"${botName}" botu bağlanıyor...` };
+      return { success: true, message: '"' + botName + '" botu bağlanıyor...' };
     } catch (err) {
       this._cleanupBot(botId);
-      return { success: false, message: `Bağlantı hatası: ${err.message}` };
+      return { success: false, message: 'Bağlantı hatası: ' + err.message };
     }
   }
 
@@ -443,7 +452,7 @@ class BotManager {
               if (!resolved) {
                 resolved = true;
                 clearTimeout(botData.connectTimeout);
-                reject(new Error(`SOCKS5 proxy hatası: ${err.message}`));
+                reject(new Error('SOCKS5 proxy hatası: ' + err.message));
               }
               return;
             }
@@ -468,7 +477,6 @@ class BotManager {
           clearTimeout(botData.connectTimeout);
           botData.status = 'online';
           this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
           this.emitChatMessage(botData.id, 'system', '✅ Sunucuya giriş yapıldı.');
 
           botData.antiAfk = new AntiAfk(bot);
@@ -483,7 +491,7 @@ class BotManager {
 
       bot.on('chat', (username, message) => {
         if (username === bot.username) return;
-        this.emitChatMessage(botData.id, 'chat', `[${username}] ${message}`);
+        this.emitChatMessage(botData.id, 'chat', '[' + username + '] ' + message);
       });
 
       bot.on('message', (jsonMsg, position) => {
@@ -496,33 +504,31 @@ class BotManager {
       });
 
       bot.on('whisper', (username, message) => {
-        this.emitChatMessage(botData.id, 'whisper', `💬 [Whisper] ${username}: ${message}`);
+        this.emitChatMessage(botData.id, 'whisper', '💬 [Whisper] ' + username + ': ' + message);
       });
 
       bot.on('playerJoined', (player) => {
         this._updatePlayerList(botData);
-        this.emitChatMessage(botData.id, 'system', `➕ ${player.username} sunucuya katıldı.`);
+        this.emitChatMessage(botData.id, 'system', '➕ ' + player.username + ' sunucuya katıldı.');
       });
 
       bot.on('playerLeft', (player) => {
         this._updatePlayerList(botData);
-        this.emitChatMessage(botData.id, 'system', `➖ ${player.username} sunucudan ayrıldı.`);
+        this.emitChatMessage(botData.id, 'system', '➖ ' + player.username + ' sunucudan ayrıldı.');
       });
 
       bot.on('kicked', (reason) => {
         const reasonText = typeof reason === 'string' ? reason : JSON.stringify(reason);
         botData.status = 'error';
-        this.emitChatMessage(botData.id, 'error', `🚫 Sunucudan atıldı: ${reasonText}`);
+        this.emitChatMessage(botData.id, 'error', '🚫 Sunucudan atıldı: ' + reasonText);
         this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
       });
 
       bot.on('error', (err) => {
         const errorMsg = err.message || 'Bilinmeyen hata';
         botData.status = 'error';
-        this.emitChatMessage(botData.id, 'error', `❌ Hata: ${errorMsg}`);
+        this.emitChatMessage(botData.id, 'error', '❌ Hata: ' + errorMsg);
         this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
 
         if (!resolved) {
           resolved = true;
@@ -537,7 +543,6 @@ class BotManager {
         }
         this.emitChatMessage(botData.id, 'system', '🔌 Sunucu bağlantısı sonlandı.');
         this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
 
         if (botData.antiAfk) {
           botData.antiAfk.stop();
@@ -584,16 +589,13 @@ class BotManager {
 
     try {
       botData.instance.chat(message);
-      this.emitChatMessage(botData.id, 'self', `→ ${message}`);
+      this.emitChatMessage(botData.id, 'self', '→ ' + message);
       return { success: true };
     } catch (err) {
-      return { success: false, message: `Mesaj gönderilemedi: ${err.message}` };
+      return { success: false, message: 'Mesaj gönderilemedi: ' + err.message };
     }
   }
 
-  /**
-   * Sunucudaki tüm botlara mesaj gönder
-   */
   broadcastMessage(serverKey, message) {
     let sent = 0;
     let failed = 0;
@@ -602,7 +604,7 @@ class BotManager {
       if (botData.serverKey === serverKey && botData.status === 'online') {
         try {
           botData.instance.chat(message);
-          this.emitChatMessage(id, 'self', `→ ${message}`);
+          this.emitChatMessage(id, 'self', '→ ' + message);
           sent++;
         } catch (err) {
           failed++;
@@ -614,7 +616,7 @@ class BotManager {
       return { success: false, message: 'Gönderilecek aktif bot bulunamadı.' };
     }
 
-    return { success: true, message: `${sent} bot'a mesaj gönderildi.${failed > 0 ? ` (${failed} başarısız)` : ''}` };
+    return { success: true, message: sent + ' bot'a mesaj gönderildi.' + (failed > 0 ? ' (' + failed + ' başarısız)' : '') };
   }
 
   // ── Bot Hareket Kontrolü ────────────────────────────────────
@@ -636,16 +638,16 @@ class BotManager {
         case 'back':
         case 'left':
         case 'right':
-          bot.setControlState(action, state);
+          bot.setControlState(action, !!state);
           break;
         case 'jump':
-          bot.setControlState('jump', state);
+          bot.setControlState('jump', !!state);
           break;
         case 'sneak':
-          bot.setControlState('sneak', state);
+          bot.setControlState('sneak', !!state);
           break;
         case 'sprint':
-          bot.setControlState('sprint', state);
+          bot.setControlState('sprint', !!state);
           break;
         case 'look':
           if (state && typeof state.yaw === 'number' && typeof state.pitch === 'number') {
@@ -653,41 +655,49 @@ class BotManager {
           }
           break;
         case 'lookYaw':
-          if (typeof state === 'number') {
+          if (typeof state === 'number' && bot.entity) {
             const currentPitch = bot.entity.pitch || 0;
             bot.look(state, currentPitch, true);
           }
           break;
         case 'lookPitch':
-          if (typeof state === 'number') {
+          if (typeof state === 'number' && bot.entity) {
             const currentYaw = bot.entity.yaw || 0;
             bot.look(currentYaw, state, true);
           }
           break;
         case 'dig':
           if (state === true) {
-            // Gerçek blok kırma - imleç altındaki bloğu bul ve kır
+            // Önceki kazmayı durdur (çift kazma = fatal error)
+            if (bot.targetDigBlock) {
+              bot.stopDigging();
+            }
             const block = bot.blockAtCursor(4);
-            if (block && block.type !== 'air') {
+            if (block && block.type !== 'air' && bot.canDigBlock(block)) {
               bot.dig(block, 'ignore')
                 .then(() => {
-                  this.emitChatMessage(botId, 'system', `⛏️ Blok kırıldı: ${block.displayName || block.name}`);
+                  this.emitChatMessage(botId, 'system', '⛏️ Blok kırıldı: ' + (block.displayName || block.name));
                 })
                 .catch(err => {
-                  this.emitChatMessage(botId, 'error', `❌ Kırma hatası: ${err.message}`);
+                  this.emitChatMessage(botId, 'error', '❌ Kırma hatası: ' + err.message);
                 });
-              this.emitChatMessage(botId, 'system', `⛏️ Blok kırılıyor: ${block.displayName || block.name}...`);
+              this.emitChatMessage(botId, 'system', '⛏️ Blok kırılıyor: ' + (block.displayName || block.name) + '...');
             } else {
-              this.emitChatMessage(botId, 'error', '❌ Kırılacak blok bulunamadı (imlecinizin altında blok yok).');
+              this.emitChatMessage(botId, 'error', '❌ Kırılacak blok bulunamadı veya erişilemiyor.');
+            }
+          } else {
+            // Kazmayı durdur
+            if (bot.targetDigBlock) {
+              bot.stopDigging();
+              this.emitChatMessage(botId, 'system', '⛏️ Kazma durduruldu.');
             }
           }
           break;
         case 'place':
           if (state && typeof state === 'object' && state.x !== undefined) {
-            const refBlock = bot.blockAt(state);
+            const refBlock = bot.blockAt(new Vec3(state.x, state.y, state.z));
             if (refBlock) {
-              const vec = new (require('vec3'))(0, 1, 0);
-              bot.placeBlock(refBlock, vec);
+              bot.placeBlock(refBlock, new Vec3(0, 1, 0));
             }
           }
           break;
@@ -699,16 +709,16 @@ class BotManager {
           break;
         case 'tp':
           if (state && typeof state === 'object' && state.x !== undefined) {
-            bot.chat(`/tp ${bot.username} ${state.x} ${state.y} ${state.z}`);
+            bot.chat('/tp ' + bot.username + ' ' + state.x + ' ' + state.y + ' ' + state.z);
           }
           break;
         default:
-          return { success: false, message: `Bilinmeyen hareket: ${action}` };
+          return { success: false, message: 'Bilinmeyen hareket: ' + action };
       }
 
       return { success: true };
     } catch (err) {
-      return { success: false, message: `Hareket hatası: ${err.message}` };
+      return { success: false, message: 'Hareket hatası: ' + err.message };
     }
   }
 
@@ -723,7 +733,6 @@ class BotManager {
       return { success: false, message: 'Bot çevrimdışı.' };
     }
 
-    // Eski runner'ı temizle
     const oldRunner = this.scriptRunners.get(botId);
     if (oldRunner) {
       oldRunner.stop();
@@ -736,7 +745,6 @@ class BotManager {
     const result = runner.run(script);
     if (result.success) {
       this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
     }
     return result;
   }
@@ -750,7 +758,6 @@ class BotManager {
     const result = runner.stop();
     this.scriptRunners.delete(botId);
     this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
     return result;
   }
 
@@ -784,14 +791,10 @@ class BotManager {
       this.emitChatMessage(botId, 'system', '🛡️ Anti-AFK devre dışı bırakıldı.');
     }
     this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
 
-    return { success: true, message: `Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` };
+    return { success: true, message: 'Anti-AFK ' + (enabled ? 'açıldı' : 'kapandı') + '.' };
   }
 
-  /**
-   * Sunucudaki tüm botlarda Anti-AFK toggle
-   */
   toggleAllAntiAfk(serverKey, enabled) {
     let toggled = 0;
 
@@ -809,13 +812,12 @@ class BotManager {
     }
 
     this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
 
     if (toggled === 0) {
       return { success: false, message: 'Aktif bot bulunamadı.' };
     }
 
-    return { success: true, message: `${toggled} bot'ta Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` };
+    return { success: true, message: toggled + ' bot'ta Anti-AFK ' + (enabled ? 'açıldı' : 'kapandı') + '.' };
   }
 
   // ── Bot Çıkarma ─────────────────────────────────────────────
@@ -827,12 +829,9 @@ class BotManager {
     }
 
     this._cleanupBot(botId);
-    return { success: true, message: `"${botData.name}" botu çıkarıldı.` };
+    return { success: true, message: '"' + botData.name + '" botu çıkarıldı.' };
   }
 
-  /**
-   * Sunucudaki tüm botları çıkar
-   */
   removeServerBots(serverKey) {
     let removed = 0;
     const toRemove = [];
@@ -852,14 +851,13 @@ class BotManager {
       return { success: false, message: 'Bu sunucuda bot bulunamadı.' };
     }
 
-    return { success: true, message: `${removed} bot çıkarıldı.` };
+    return { success: true, message: removed + ' bot çıkarıldı.' };
   }
 
   _cleanupBot(botId) {
     const botData = this.bots.get(botId);
     if (!botData) return;
 
-    // Çalışan script'i durdur
     const runner = this.scriptRunners.get(botId);
     if (runner) {
       runner.stop();
@@ -885,7 +883,6 @@ class BotManager {
 
     this.bots.delete(botId);
     this.emitBotUpdate();
-    this.io.emit('ram-usage', this.getRamUsage());
   }
 
   destroyAll() {
@@ -898,7 +895,6 @@ class BotManager {
 
   emitBotUpdate() {
     this.io.emit('bot-update', this.getAllBots());
-    this.io.emit('server-bots', this.getBotsByServer());
   }
 
   emitChatMessage(botId, type, text) {
