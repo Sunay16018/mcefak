@@ -244,7 +244,7 @@ setInterval(() => {
 }, 500);
 
 // ── Sunucuyu Başlat ─────────────────────────────────────────────
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════╗`);
   console.log(`║   Minecraft AFK Client v3.0.0            ║`);
