@@ -1875,7 +1875,10 @@
           server.onlinePlayers = (data.players && data.players.online) || 0;
           server.maxPlayers = (data.players && data.players.max) || 0;
           if (data.version) server.version = (typeof data.version === 'string') ? data.version : (data.version.name_clean || data.version.name || server.version);
-          if (data.icon) server.icon = data.icon;
+          if (data.icon) {
+            // mcsrvstat.us bazen prefix'siz base64, bazen tam data URL döndürür
+            server.icon = data.icon.startsWith('data:') ? data.icon : 'data:image/png;base64,' + data.icon;
+          }
         }
 
         renderServerBrowser();
@@ -2198,7 +2201,7 @@
           <div class="movement-row">
             <button class="move-btn wide" data-move="swing" data-bot="${bot.id}">✋ Sallan</button>
             <button class="move-btn wide" data-move="useItem" data-bot="${bot.id}">🖱️ Kullan</button>
-            <button class="move-btn wide toggle-mine" id="mine-btn-${bot.id}" data-bot="${bot.id}">⛏️ Kaz</button>
+            <button class="move-btn wide toggle-mine" data-action="toggle-mine" data-bot="${bot.id}" id="mine-btn-${bot.id}">⛏️ Kaz</button>
           </div>
           <div class="look-pad-wrapper">
             <div class="look-pad-label">👁️ Bakış Yönü — Sürükle</div>
@@ -2277,6 +2280,27 @@
           state.mutedConsoles.add(bot.id);
           if (muteBtn) muteBtn.classList.add('muted-btn');
           showToast('success', 'Konsol susturuldu (script/system mesajları gizlendi).');
+        }
+      });
+
+      card.querySelector('[data-action="toggle-mine"]').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const botId = btn.dataset.bot;
+        const isOn = state.miningBots.has(botId);
+        if (isOn) {
+          state.miningBots.delete(botId);
+          btn.classList.remove('mining-on');
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: botId, action: 'stopMining', state: true });
+          }
+          showToast('success', '⛏️ Kazma durduruldu.');
+        } else {
+          state.miningBots.add(botId);
+          btn.classList.add('mining-on');
+          if (!isOfflineMode && socket && typeof socket.emit === 'function') {
+            socket.emit('bot-move', { botId: botId, action: 'startMining', state: true });
+          }
+          showToast('success', '⛏️ Kazma başlatıldı.');
         }
       });
 
@@ -2361,26 +2385,6 @@
 
       if (bot && bot.id) {
         loadMessagesFromStorage(bot.id);
-      }
-
-      // ── Mining Toggle ──────────────────────────────────────
-      const mineBtn = card.querySelector('#mine-btn-' + bot.id);
-      if (mineBtn) {
-        if (state.miningBots.has(bot.id)) mineBtn.classList.add('mining-on');
-        mineBtn.addEventListener('click', () => {
-          const isOn = state.miningBots.has(bot.id);
-          if (isOn) {
-            state.miningBots.delete(bot.id);
-            mineBtn.classList.remove('mining-on');
-            if (!isOfflineMode && socket) socket.emit('bot-move', { botId: bot.id, action: 'stopMining', state: true });
-            showToast('success', '⛏️ Kazma durduruldu.');
-          } else {
-            state.miningBots.add(bot.id);
-            mineBtn.classList.add('mining-on');
-            if (!isOfflineMode && socket) socket.emit('bot-move', { botId: bot.id, action: 'startMining', state: true });
-            showToast('success', '⛏️ Kazma başlatıldı.');
-          }
-        });
       }
 
       // ── Look Pad ──────────────────────────────────────────
