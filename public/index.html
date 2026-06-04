@@ -1235,7 +1235,7 @@
       <div class="logo-icon">⛏️</div>
       <div>
         <h1>Minecraft AFK Client</h1>
-        <span>v3.0.0 • Bot Kontrol + Script + Hareket</span>
+        <span>v3.1.0 • Bot Kontrol + Script + Hareket + Kazma + Bakış</span>
       </div>
     </div>
     <div class="stats">
@@ -1252,9 +1252,9 @@
         <span class="label">/</span>
         <span class="value" id="bot-limit">-</span>
       </div>
-    </div>
-    <div id="offline-badge" style="display:none; background: var(--warning); color: #000; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; margin-left: auto;">
-      ⚠️ Çevrimdışı Mod
+      <div id="offline-badge" style="display:none; background: var(--warning); color: #000; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700;">
+        ⚠️ Çevrimdışı Mod
+      </div>
     </div>
   </header>
 
@@ -1620,50 +1620,6 @@
 
     // ── Socket Olayları ────────────────────────────────────────
 
-    // ── Çevrimdışı Mod Yardımcıları ───────────────────────────
-    function addBotsOffline(serverIp, port, version, proxy, botNames) {
-      const serverKey = `${serverIp}:${port}`;
-      const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      botNames.forEach((name, idx) => {
-        const botId = 'offline-bot-' + Date.now() + '-' + idx;
-        const bot = {
-          id: botId,
-          name: name,
-          serverIp: serverIp,
-          serverPort: port,
-          serverKey: serverKey,
-          version: version,
-          hasProxy: !!proxy,
-          proxy: proxy || '',
-          status: 'online',
-          antiAfkEnabled: false,
-          x: 0, y: 64, z: 0,
-          health: 20, maxHealth: 20,
-          food: 20, foodSaturation: 0,
-          xp: 0, level: 0
-        };
-        state.bots.set(botId, bot);
-        state.consoles.set(botId, []);
-
-        // Demo mesaj ekle
-        setTimeout(() => {
-          addConsoleMessage(botId, 'system', `${name} sunucuya bağlandı (${serverIp}:${port})`, now);
-          addConsoleMessage(botId, 'info', `Sürüm: ${version} | Proxy: ${proxy || 'Yok'}`, now);
-        }, 300 + idx * 200);
-      });
-
-      updateServersFromBots();
-      renderServerBrowser();
-      if (state.currentServerKey === serverKey) {
-        renderBotPanel();
-      } else if (!state.currentServerKey) {
-        // Otomatik olarak sunucu panelini aç
-        setTimeout(() => openServerPanel(serverKey), 500);
-      }
-    }
-
-    // ── Socket Olayları ────────────────────────────────────────
     if (!isOfflineMode && socket && typeof socket.on === 'function') {
       socket.on('connect', () => {
         console.log('[Socket] Bağlandı');
@@ -1677,7 +1633,7 @@
       socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
       socket.on('ram-usage', (data) => {
-        els.ramUsage.textContent = `${data.usedRamMB} / ${data.totalRamMB}`;
+        els.ramUsage.textContent = data.usedRamMB;
         els.botCount.textContent = data.botCount;
         els.botLimit.textContent = data.maxBots;
       });
@@ -1745,7 +1701,7 @@
       // Çevrimdışı mod - göstergeyi aktif et ve varsayılan değerleri ayarla
       const offlineBadge = document.getElementById('offline-badge');
       if (offlineBadge) offlineBadge.style.display = 'block';
-      els.ramUsage.textContent = '0 / 0';
+      els.ramUsage.textContent = '0';
       els.botCount.textContent = '0';
       els.botLimit.textContent = '∞';
       console.log('[App] Çevrimdışı mod - Socket.IO sunucusu bağlı değil');
