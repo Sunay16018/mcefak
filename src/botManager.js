@@ -394,6 +394,7 @@ class BotManager {
 
     this.bots.set(botId, botData);
     this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
 
     try {
       await this._connectBot(botData);
@@ -467,6 +468,7 @@ class BotManager {
           clearTimeout(botData.connectTimeout);
           botData.status = 'online';
           this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
           this.emitChatMessage(botData.id, 'system', '✅ Sunucuya giriş yapıldı.');
 
           botData.antiAfk = new AntiAfk(bot);
@@ -512,6 +514,7 @@ class BotManager {
         botData.status = 'error';
         this.emitChatMessage(botData.id, 'error', `🚫 Sunucudan atıldı: ${reasonText}`);
         this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
       });
 
       bot.on('error', (err) => {
@@ -519,6 +522,7 @@ class BotManager {
         botData.status = 'error';
         this.emitChatMessage(botData.id, 'error', `❌ Hata: ${errorMsg}`);
         this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
 
         if (!resolved) {
           resolved = true;
@@ -533,6 +537,7 @@ class BotManager {
         }
         this.emitChatMessage(botData.id, 'system', '🔌 Sunucu bağlantısı sonlandı.');
         this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
 
         if (botData.antiAfk) {
           botData.antiAfk.stop();
@@ -731,6 +736,7 @@ class BotManager {
     const result = runner.run(script);
     if (result.success) {
       this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
     }
     return result;
   }
@@ -744,6 +750,7 @@ class BotManager {
     const result = runner.stop();
     this.scriptRunners.delete(botId);
     this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
     return result;
   }
 
@@ -777,6 +784,7 @@ class BotManager {
       this.emitChatMessage(botId, 'system', '🛡️ Anti-AFK devre dışı bırakıldı.');
     }
     this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
 
     return { success: true, message: `Anti-AFK ${enabled ? 'açıldı' : 'kapandı'}.` };
   }
@@ -801,6 +809,7 @@ class BotManager {
     }
 
     this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
 
     if (toggled === 0) {
       return { success: false, message: 'Aktif bot bulunamadı.' };
@@ -876,6 +885,7 @@ class BotManager {
 
     this.bots.delete(botId);
     this.emitBotUpdate();
+    this.io.emit('ram-usage', this.getRamUsage());
   }
 
   destroyAll() {
