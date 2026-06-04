@@ -1633,7 +1633,7 @@
       socket.on('disconnect', () => console.log('[Socket] Bağlantı kesildi'));
 
       socket.on('ram-usage', (data) => {
-        els.ramUsage.textContent = data.usedRamMB;
+        els.ramUsage.textContent = `${data.usedRamMB} / ${data.totalRamMB}`;
         els.botCount.textContent = data.botCount;
         els.botLimit.textContent = data.maxBots;
       });
@@ -1701,7 +1701,7 @@
       // Çevrimdışı mod - göstergeyi aktif et ve varsayılan değerleri ayarla
       const offlineBadge = document.getElementById('offline-badge');
       if (offlineBadge) offlineBadge.style.display = 'block';
-      els.ramUsage.textContent = '0';
+      els.ramUsage.textContent = '0 / 0';
       els.botCount.textContent = '0';
       els.botLimit.textContent = '∞';
       console.log('[App] Çevrimdışı mod - Socket.IO sunucusu bağlı değil');
