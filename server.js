@@ -226,27 +226,44 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── Bot Script Durdur ─────────────────────────────────────
+  // ── Bot Script Durdur ────────────────────────────────────
   socket.on('stop-bot-script', (botId) => {
     try {
       const result = botManager.stopBotScript(botId);
-      socket.emit('system-message', { 
-        type: result.success ? 'success' : 'error', 
-        text: result.message 
+      socket.emit('system-message', {
+        type: result.success ? 'success' : 'error',
+        text: result.message
       });
     } catch (err) {
-      console.error('[Socket] stop-bot-script hatası:', err);
-      socket.emit('system-message', { type: 'error', text: 'Script durdurma hatası.' });
+      socket.emit('system-message', { type: 'error', text: 'Script durdurulamadı.' });
     }
   });
 
-  // ── Bot Script Durumu Sorgula ─────────────────────────────
-  socket.on('get-script-status', (botId) => {
+  // ── Envanter İste ────────────────────────────────────────
+  socket.on('get-inventory', (botId) => {
     try {
-      const result = botManager.getScriptStatus(botId);
-      socket.emit('script-status', { botId, ...result });
+      const result = botManager.getInventory(botId);
+      socket.emit('inventory-data', { botId, ...result });
     } catch (err) {
-      console.error('[Socket] get-script-status hatası:', err);
+      socket.emit('inventory-data', { botId, success: false, message: 'Envanter alınamadı.' });
+    }
+  });
+
+  // ── Envanter Aksiyonu ────────────────────────────────────
+  socket.on('inventory-action', ({ botId, action, slot }) => {
+    try {
+      const result = botManager.doInventoryAction(botId, action, slot);
+      socket.emit('system-message', {
+        type: result.success ? 'success' : 'error',
+        text: result.success ? 'Eylem gerçekleştirildi.' : result.message
+      });
+      // Güncel envanteri gönder
+      setTimeout(() => {
+        const inv = botManager.getInventory(botId);
+        socket.emit('inventory-data', { botId, ...inv });
+      }, 300);
+    } catch (err) {
+      socket.emit('system-message', { type: 'error', text: 'Envanter aksiyonu hatası.' });
     }
   });
 
@@ -271,7 +288,7 @@ setInterval(() => {
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════╗`);
-  console.log(`║   Minecraft AFK Client v3.1.0            ║`);
+  console.log(`║   Minecraft AFK Client v3.0.0            ║`);
   console.log(`║   Port: ${PORT.toString().padEnd(33)}║`);
   console.log(`║   Mode: ${(process.env.PORT ? 'Render.com' : 'Local').padEnd(33)}║`);
   console.log(`╚══════════════════════════════════════════╝\n`);
