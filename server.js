@@ -1,15 +1,16 @@
 /**
- * Minecraft AFK Client v2.0 - Ana Sunucu
+ * Minecraft AFK Client v3.0 - Ana Sunucu
  * 
  * Yeni özellikler:
- * - Server Browser (Minecraft multiplayer tarzı sunucu listesi)
- * - Bot Kontrol Paneli (her sunucu için ayrı panel)
- * - Geri Dönüş butonu
+ * - Bot koordinat, can, açlık takibi
+ * - WASD hareket kontrolü (jump, sneak, sit)
+ * - Bot başına özel script çalıştırma paneli
+ * - Server Browser + Bot Kontrol Paneli
  * - mcstatus.io API ile sunucu ikonu, MOTD, oyuncu sayısı
  * - SOCKS5 proxy desteği
+ * - Dinamik RAM limiti
  * 
- * @author Claude Opus 4.8 Style
- * @version 2.0.0
+ * @version 3.0.0
  */
 
 const express = require('express');
@@ -78,7 +79,6 @@ io.on('connection', (socket) => {
           proxy
         });
         results.push(result);
-        // Küçük gecikme ile ekle (rate limit önlemi)
         await new Promise(r => setTimeout(r, 500));
       }
 
@@ -191,22 +191,63 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── Bot Hareket Kontrolü ──────────────────────────────────
+  socket.on('bot-move', ({ botId, action, state: moveState }) => {
+    try {
+      const result = botManager.handleBotMove(botId, action, moveState);
+      if (!result.success) {
+        socket.emit('system-message', { type: 'error', text: result.message });
+      }
+    } catch (err) {
+      console.error('[Socket] bot-move hatası:', err);
+      socket.emit('system-message', { type: 'error', text: 'Hareket komutu hatası.' });
+    }
+  });
+
+  // ── Bot Script Çalıştır ───────────────────────────────────
+  socket.on('run-bot-script', ({ botId, script }) => {
+    try {
+      const result = botManager.runBotScript(botId, script);
+      socket.emit('system-message', { 
+        type: result.success ? 'success' : 'error', 
+        text: result.message 
+      });
+      if (result.output) {
+        socket.emit('chat-message', { 
+          botId, 
+          type: 'system', 
+          text: `[Script Output] ${result.output}`, 
+          timestamp: new Date().toLocaleTimeString('tr-TR') 
+        });
+      }
+    } catch (err) {
+      console.error('[Socket] run-bot-script hatası:', err);
+      socket.emit('system-message', { type: 'error', text: 'Script çalıştırma hatası.' });
+    }
+  });
+
   // ── Bağlantı Kopması ────────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`[Socket] İstemci ayrıldı: ${socket.id}`);
   });
 });
 
-// ── RAM Kullanımı Periyodik Yayını ──────────────────────────────
+// ── RAM Kullanımı & Bot Durumu Periyodik Yayını ────────────────
 setInterval(() => {
   io.emit('ram-usage', botManager.getRamUsage());
 }, 3000);
 
+// Bot durumlarını periyodik güncelle (koordinat, can, açlık)
+setInterval(() => {
+  const botData = botManager.getAllBotsWithStats();
+  io.emit('bot-stats-update', botData);
+}, 500);
+
 // ── Sunucuyu Başlat ─────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 httpServer.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════╗`);
-  console.log(`║   Minecraft AFK Client v2.0.0            ║`);
+  console.log(`║   Minecraft AFK Client v3.0.0            ║`);
   console.log(`║   Port: ${PORT.toString().padEnd(33)}║`);
   console.log(`║   Mode: ${(process.env.PORT ? 'Render.com' : 'Local').padEnd(33)}║`);
   console.log(`╚══════════════════════════════════════════╝\n`);
